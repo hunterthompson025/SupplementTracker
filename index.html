@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supplement Tracker</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#f8f7f4;--surface:#ffffff;--surface-1:#f1f0ec;
+    --border:#e0deda;--border-strong:#c8c6c0;
+    --text:#1a1a18;--text-secondary:#5f5e5a;--text-muted:#999890;
+    --accent:#1a6fd4;--accent-bg:#e6f1fb;--accent-border:#b5d4f4;--accent-text:#185fa5;
+    --success:#3b6d11;--success-bg:#eaf3de;--success-border:#c0dd97;
+    --danger:#a32d2d;--danger-bg:#fcebeb;--danger-border:#f7c1c1;
+    --warning-text:#854f0b;--warning-bg:#faeeda;--warning-border:#fac775;
+    --pro-text:#534ab7;--pro-bg:#eeedfe;--pro-border:#afa9ec;
+    --radius:8px;--font:system-ui,-apple-system,'Segoe UI',sans-serif
+  }
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#1a1a18;--surface:#2c2c2a;--surface-1:#3a3a38;
+      --border:#444441;--border-strong:#5f5e5a;
+      --text:#f0efe8;--text-secondary:#b4b2a9;--text-muted:#888780;
+      --accent:#378add;--accent-bg:#042c53;--accent-border:#0c447c;--accent-text:#85b7eb;
+      --success:#97c459;--success-bg:#173404;--success-border:#3b6d11;
+      --danger:#f09595;--danger-bg:#501313;--danger-border:#791f1f;
+      --warning-text:#ef9f27;--warning-bg:#412402;--warning-border:#854f0b;
+      --pro-text:#afa9ec;--pro-bg:#26215c;--pro-border:#534ab7;
+    }
+  }
+  body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+  .app{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+  h1{font-size:20px;font-weight:500;margin-bottom:1.25rem;display:flex;align-items:center;gap:10px}
+  h1 span{font-size:13px;font-weight:400;color:var(--text-muted)}
+  .nav{display:flex;gap:8px;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:1rem}
+  .nav-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius);padding:8px 16px;font-size:14px;cursor:pointer;color:var(--text-secondary);font-family:var(--font);display:flex;align-items:center;gap:6px}
+  .nav-btn.active{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
+  .nav-btn:hover:not(.active){background:var(--surface-1)}
+  .screen{display:none}.screen.active{display:block}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+  .card-title{font-size:15px;font-weight:500;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+  .row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
+  label{font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px}
+  select,input[type=text],input[type=number]{width:100%;height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:14px;font-family:var(--font);outline:none}
+  select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+  .btn{height:36px;padding:0 16px;border:1px solid var(--border-strong);border-radius:var(--radius);background:transparent;color:var(--text);font-size:14px;cursor:pointer;font-family:var(--font);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+  .btn:hover{background:var(--surface-1)}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn.primary:hover{opacity:.9}
+  .btn.danger{color:var(--danger);border-color:var(--danger-border)}
+  .btn.danger:hover{background:var(--danger-bg)}
+  .btn.success{background:var(--success);color:#fff;border-color:var(--success)}
+  .btn.success:hover{opacity:.9}
+  .btn.fullscript{background:#2d7a4f;color:#fff;border-color:#2d7a4f;text-decoration:none}
+  .btn.fullscript:hover{opacity:.9}
+  .field{flex:1;min-width:120px}
+  .field-sm{flex:0 0 100px}
+  .field-xs{flex:0 0 80px}
+  .supp-row{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .supp-row:last-child{border-bottom:none}
+  .supp-name{font-size:14px;font-weight:500}
+  .supp-detail{font-size:12px;color:var(--text-secondary);margin-top:2px}
+  .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:12px;background:var(--surface-1);border:1px solid var(--border);color:var(--text-secondary)}
+  .badge.morning{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border)}
+  .badge.evening{background:var(--pro-bg);color:var(--pro-text);border-color:var(--pro-border)}
+  .badge.noon{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
+  .badge.bedtime{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
+  .badge.warn{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border)}
+  .badge.ok{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
+  .time-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+  .tag-btn{padding:3px 10px;border-radius:20px;font-size:12px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--text-secondary);font-family:var(--font)}
+  .tag-btn.sel.morning{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border)}
+  .tag-btn.sel.noon{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
+  .tag-btn.sel.evening{background:var(--pro-bg);color:var(--pro-text);border-color:var(--pro-border)}
+  .tag-btn.sel.bedtime{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
+  .inv-table{width:100%;border-collapse:collapse;font-size:13px}
+  .inv-table th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border-strong);color:var(--text-secondary);font-weight:500;font-size:12px}
+  .inv-table th.r,.inv-table td.r{text-align:right}
+  .inv-table td{padding:10px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+  .inv-table tr:last-child td{border-bottom:none}
+  .inv-table tr.low-row td{background:var(--danger-bg)}
+  .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem}
+  .metric{background:var(--surface-1);border-radius:var(--radius);padding:12px;text-align:center}
+  .metric-label{font-size:12px;color:var(--text-secondary);margin-bottom:4px}
+  .metric-value{font-size:24px;font-weight:500}
+  .metric-value.danger{color:var(--danger)}
+  .alert{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:10px;border:1px solid;display:flex;align-items:center;gap:8px}
+  .alert.info{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
+  .alert.danger{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border)}
+  .alert.success{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
+  .order-list{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-family:monospace;font-size:13px;white-space:pre-wrap;margin-top:10px;line-height:1.7}
+  .divider{height:1px;background:var(--border);margin:1rem 0}
+  .section-title{font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+  .empty{text-align:center;padding:2rem;color:var(--text-muted);font-size:14px}
+  .user-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px;font-size:14px;cursor:pointer}
+  .user-chip:hover{border-color:var(--accent);color:var(--accent)}
+  .user-chip.active-chip{background:var(--accent-bg);border-color:var(--accent-border);color:var(--accent-text)}
+  .user-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem}
+  @media(max-width:600px){
+    .inv-table th:nth-child(4),.inv-table td:nth-child(4){display:none}
+    .row{flex-direction:column}
+    .field,.field-sm,.field-xs{flex:unset;width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1><i class="ti ti-pill"></i> Supplement Tracker <span>family inventory</span></h1>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showScreen('home',this)"><i class="ti ti-home"></i> Home</button>
+    <button class="nav-btn" onclick="showScreen('maintenance',this)"><i class="ti ti-settings"></i> Maintenance</button>
+    <button class="nav-btn" onclick="showScreen('inventory',this)"><i class="ti ti-stack-2"></i> Inventory</button>
+  </div>
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-calendar-check"></i> Log supplement usage</div>
+      <div class="row">
+        <div class="field">
+          <label>Select user</label>
+          <select id="home-user" onchange="loadHomePreview()"></select>
+        </div>
+        <div class="field-sm">
+          <label>Number of days</label>
+          <input type="number" id="home-days" min="1" max="31" value="1" oninput="loadHomePreview()">
+        </div>
+        <button class="btn primary" onclick="logUsage()"><i class="ti ti-check"></i> Submit</button>
+      </div>
+      <div id="home-preview"></div>
+    </div>
+    <div id="home-alert"></div>
+  </div>
+
+  <!-- MAINTENANCE -->
+  <div class="screen" id="screen-maintenance">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-users"></i> Users</div>
+      <div class="row">
+        <div class="field"><input type="text" id="new-user-name" placeholder="Name (e.g. Hunter)" onkeydown="if(event.key==='Enter')addUser()"></div>
+        <button class="btn primary" onclick="addUser()"><i class="ti ti-plus"></i> Add user</button>
+      </div>
+      <div id="user-list"></div>
+    </div>
+
+    <div class="card" id="supp-card" style="display:none">
+      <div class="card-title"><i class="ti ti-pill"></i> Supplements — <span id="supp-card-user" style="color:var(--accent-text)"></span></div>
+      <div class="section-title">Add supplement</div>
+      <div class="row">
+        <div class="field"><label>Supplement name</label><input type="text" id="ns-name" placeholder="e.g. Vitamin D3"></div>
+        <div class="field-sm"><label>Caps per bottle</label><input type="number" id="ns-cap" min="1" value="60"></div>
+        <div class="field-sm"><label>Bottles on hand</label><input type="number" id="ns-bot" min="0" value="1" step="0.5"></div>
+        <div class="field-xs"><label>Dose (caps)</label><input type="number" id="ns-dose" min="1" value="1"></div>
+      </div>
+      <div style="margin-bottom:14px">
+        <label style="margin-bottom:8px;display:block">Times taken each day</label>
+        <div class="time-tags" id="ns-tags">
+          <button class="tag-btn morning" onclick="toggleTag(this)">Morning</button>
+          <button class="tag-btn noon" onclick="toggleTag(this)">Noon</button>
+          <button class="tag-btn evening" onclick="toggleTag(this)">Evening</button>
+          <button class="tag-btn bedtime" onclick="toggleTag(this)">Bedtime</button>
+        </div>
+      </div>
+      <button class="btn primary" onclick="addSupp()"><i class="ti ti-plus"></i> Add supplement</button>
+      <div class="divider"></div>
+      <div class="section-title">Current supplements</div>
+      <div id="supp-list"></div>
+    </div>
+  </div>
+
+  <!-- INVENTORY -->
+  <div class="screen" id="screen-inventory">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-stack-2"></i> Current inventory — all users</div>
+      <div class="metric-grid" id="inv-metrics"></div>
+      <div id="inv-alert"></div>
+      <div style="overflow-x:auto">
+        <table class="inv-table">
+          <thead>
+            <tr>
+              <th>Supplement</th>
+              <th>User</th>
+              <th class="r">On hand (caps)</th>
+              <th class="r">Weekly use</th>
+              <th class="r">Monthly use</th>
+              <th class="r">Days left</th>
+              <th class="r">Status</th>
+            </tr>
+          </thead>
+          <tbody id="inv-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-shopping-cart"></i> Ordering</div>
+      <div class="row" style="flex-wrap:wrap">
+        <button class="btn success" onclick="showOrderList()"><i class="ti ti-list"></i> Generate order list</button>
+        <a href="https://us.fullscript.com/sign_in" target="_blank" class="btn fullscript"><i class="ti ti-external-link"></i> Go to Fullscript</a>
+      </div>
+      <div id="order-output"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const KEY = 'supp_tracker_v2';
+let state = {users:[]};
+let activeMainUser = null;
+
+function load(){
+  try{
+    const raw = localStorage.getItem(KEY);
+    if(raw) state = JSON.parse(raw);
+  }catch(e){}
+  init();
+}
+
+function save(){
+  localStorage.setItem(KEY, JSON.stringify(state));
+}
+
+function init(){
+  populateUserDropdown();
+  renderUserList();
+  renderInventory();
+  loadHomePreview();
+}
+
+function showScreen(name, btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='inventory') renderInventory();
+  if(name==='home') loadHomePreview();
+}
+
+function populateUserDropdown(){
+  const sel = document.getElementById('home-user');
+  const prev = sel.value;
+  sel.innerHTML = state.users.length===0
+    ? '<option value="">— add a user first —</option>'
+    : state.users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
+  if(prev && state.users.find(u=>u.id===prev)) sel.value = prev;
+}
+
+// USERS
+function addUser(){
+  const name = document.getElementById('new-user-name').value.trim();
+  if(!name) return;
+  state.users.push({id: 'u'+Date.now(), name, supplements:[]});
+  document.getElementById('new-user-name').value='';
+  save(); populateUserDropdown(); renderUserList();
+}
+
+function deleteUser(id){
+  if(!confirm('Delete this user and all their supplements?')) return;
+  state.users = state.users.filter(u=>u.id!==id);
+  if(activeMainUser===id){ activeMainUser=null; document.getElementById('supp-card').style.display='none'; }
+  save(); populateUserDropdown(); renderUserList(); renderInventory();
+}
+
+function renderUserList(){
+  const el = document.getElementById('user-list');
+  if(!state.users.length){ el.innerHTML='<div class="empty">No users yet. Add one above.</div>'; return; }
+  el.innerHTML = state.users.map(u=>`
+    <div class="supp-row" style="align-items:center">
+      <div style="flex:1">
+        <div class="supp-name">${u.name}</div>
+        <div class="supp-detail">${u.supplements.length} supplement${u.supplements.length!==1?'s':''}</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="openSuppCard('${u.id}')"><i class="ti ti-pill"></i> Manage supplements</button>
+        <button class="btn danger" onclick="deleteUser('${u.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+// SUPPLEMENTS
+function openSuppCard(id){
+  activeMainUser = id;
+  const user = state.users.find(u=>u.id===id);
+  document.getElementById('supp-card').style.display='block';
+  document.getElementById('supp-card-user').textContent = user.name;
+  renderSuppList();
+  document.getElementById('supp-card').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function toggleTag(btn){
+  btn.classList.toggle('sel');
+}
+
+function getSelectedTags(){
+  return Array.from(document.querySelectorAll('#ns-tags .tag-btn.sel')).map(b=>b.textContent.trim());
+}
+
+function addSupp(){
+  const user = state.users.find(u=>u.id===activeMainUser);
+  if(!user) return;
+  const name = document.getElementById('ns-name').value.trim();
+  if(!name){ alert('Enter a supplement name.'); return; }
+  const cap = parseInt(document.getElementById('ns-cap').value)||60;
+  const bot = parseFloat(document.getElementById('ns-bot').value)||1;
+  const dose = parseInt(document.getElementById('ns-dose').value)||1;
+  const times = getSelectedTags();
+  user.supplements.push({id:'s'+Date.now(), name, capPerBottle:cap, bottles:bot, dosePerSession:dose, times});
+  document.getElementById('ns-name').value='';
+  document.getElementById('ns-cap').value='60';
+  document.getElementById('ns-bot').value='1';
+  document.getElementById('ns-dose').value='1';
+  document.querySelectorAll('#ns-tags .tag-btn').forEach(b=>b.classList.remove('sel'));
+  save(); renderSuppList(); renderInventory();
+}
+
+function deleteSupp(uid, sid){
+  if(!confirm('Remove this supplement?')) return;
+  const user = state.users.find(u=>u.id===uid);
+  if(user) user.supplements = user.supplements.filter(s=>s.id!==sid);
+  save(); renderSuppList(); renderInventory();
+}
+
+function addBottle(uid, sid){
+  const user = state.users.find(u=>u.id===uid);
+  const supp = user && user.supplements.find(s=>s.id===sid);
+  if(!supp) return;
+  supp.bottles += 1;
+  save(); renderSuppList(); renderInventory();
+}
+
+function editBottles(uid, sid, val){
+  const user = state.users.find(u=>u.id===uid);
+  const supp = user && user.supplements.find(s=>s.id===sid);
+  if(!supp) return;
+  const caps = parseFloat(val);
+  if(!isNaN(caps) && caps >= 0) supp.bottles = caps / supp.capPerBottle;
+  save(); renderInventory();
+}
+
+function renderSuppList(){
+  const user = state.users.find(u=>u.id===activeMainUser);
+  const el = document.getElementById('supp-list');
+  if(!user || !user.supplements.length){ el.innerHTML='<div class="empty">No supplements yet.</div>'; return; }
+  el.innerHTML = user.supplements.map(s=>{
+    const caps = Math.round(s.bottles * s.capPerBottle);
+    const timeBadges = s.times.map(t=>`<span class="badge ${t.toLowerCase()}">${t}</span>`).join(' ');
+    return `<div class="supp-row">
+      <div style="flex:1">
+        <div class="supp-name">${s.name}</div>
+        <div class="supp-detail">${caps} caps on hand &nbsp;·&nbsp; ${s.bottles.toFixed(1)} bottles &nbsp;·&nbsp; ${s.capPerBottle} caps/bottle &nbsp;·&nbsp; ${s.dosePerSession} cap${s.dosePerSession!==1?'s':''}/session</div>
+        <div class="time-tags">${timeBadges || '<span style="font-size:12px;color:var(--text-muted)">No times set</span>'}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
+        <button class="btn" onclick="addBottle('${user.id}','${s.id}')" title="Add 1 bottle"><i class="ti ti-plus"></i> 1 bottle</button>
+        <button class="btn danger" onclick="deleteSupp('${user.id}','${s.id}')"><i class="ti ti-trash"></i></button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// HOME — USAGE LOGGING
+function loadHomePreview(){
+  const userId = document.getElementById('home-user').value;
+  const user = state.users.find(u=>u.id===userId);
+  const days = Math.max(1, parseInt(document.getElementById('home-days').value)||1);
+  const el = document.getElementById('home-preview');
+  if(!user || !user.supplements.length){
+    el.innerHTML='<div class="empty" style="padding:1rem 0">No supplements configured for this user.</div>';
+    return;
+  }
+  el.innerHTML = `<div style="font-size:13px;color:var(--text-secondary);margin:10px 0 6px">Preview — ${days} day${days!==1?'s':''} of usage for ${user.name}:</div>`
+    + user.supplements.map(s=>{
+      const sess = s.times.length||1;
+      const used = s.dosePerSession * sess * days;
+      const before = Math.round(s.bottles * s.capPerBottle);
+      const after = Math.max(0, before - used);
+      const timeBadges = s.times.map(t=>`<span class="badge ${t.toLowerCase()}">${t}</span>`).join(' ');
+      return `<div class="supp-row">
+        <div style="flex:1">
+          <div class="supp-name">${s.name}</div>
+          <div class="time-tags">${timeBadges}</div>
+        </div>
+        <div style="text-align:right;font-size:13px;flex-shrink:0">
+          <div style="font-weight:500">−${used} cap${used!==1?'s':''}</div>
+          <div style="color:var(--text-secondary)">${before} → ${after}</div>
+        </div>
+      </div>`;
+    }).join('');
+}
+
+function logUsage(){
+  const userId = document.getElementById('home-user').value;
+  const days = Math.max(1, parseInt(document.getElementById('home-days').value)||1);
+  const user = state.users.find(u=>u.id===userId);
+  const alertEl = document.getElementById('home-alert');
+  if(!user){ alertEl.innerHTML='<div class="alert danger"><i class="ti ti-alert-circle"></i> Select a user first.</div>'; return; }
+  if(!user.supplements.length){ alertEl.innerHTML='<div class="alert danger"><i class="ti ti-alert-circle"></i> No supplements configured for this user.</div>'; return; }
+  user.supplements.forEach(s=>{
+    const sess = s.times.length||1;
+    const used = s.dosePerSession * sess * days;
+    const newCaps = Math.max(0, s.bottles * s.capPerBottle - used);
+    s.bottles = newCaps / s.capPerBottle;
+  });
+  save();
+  alertEl.innerHTML=`<div class="alert success"><i class="ti ti-check"></i> Logged ${days} day${days!==1?'s':''} of supplements for ${user.name}.</div>`;
+  setTimeout(()=>alertEl.innerHTML='', 4000);
+  loadHomePreview();
+  renderInventory();
+}
+
+// INVENTORY
+function renderInventory(){
+  const today = new Date();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  const daysLeft = Math.max(1, daysInMonth - today.getDate());
+
+  let rows = [];
+  state.users.forEach(user=>{
+    user.supplements.forEach(s=>{
+      const daily = s.dosePerSession * (s.times.length||1);
+      const caps = s.bottles * s.capPerBottle;
+      const daysLeft_ = daily > 0 ? caps / daily : 9999;
+      const runsOut = daysLeft_ < daysLeft;
+      rows.push({user, s, caps, daily, weekly:daily*7, monthly:daily*30, daysRemaining:daysLeft_, runsOut});
+    });
+  });
+
+  const metricsEl = document.getElementById('inv-metrics');
+  const alertEl = document.getElementById('inv-alert');
+  const tbody = document.getElementById('inv-tbody');
+
+  if(!rows.length){
+    metricsEl.innerHTML='';
+    alertEl.innerHTML='<div class="alert info"><i class="ti ti-info-circle"></i> No supplements tracked yet. Add users and supplements in Maintenance.</div>';
+    tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--text-muted)">No data</td></tr>';
+    return;
+  }
+
+  const lowCount = rows.filter(r=>r.runsOut).length;
+  metricsEl.innerHTML = `
+    <div class="metric"><div class="metric-label">Total supplements</div><div class="metric-value">${rows.length}</div></div>
+    <div class="metric"><div class="metric-label">Users tracked</div><div class="metric-value">${state.users.length}</div></div>
+    <div class="metric"><div class="metric-label">Days left in month</div><div class="metric-value">${daysLeft}</div></div>
+    <div class="metric"><div class="metric-label">Need to order</div><div class="metric-value ${lowCount>0?'danger':''}">${lowCount}</div></div>`;
+
+  alertEl.innerHTML = lowCount > 0
+    ? `<div class="alert danger"><i class="ti ti-alert-triangle"></i> ${lowCount} supplement${lowCount>1?'s':''} will run out before next month's order.</div>`
+    : `<div class="alert success"><i class="ti ti-check"></i> All supplements should last until next month's order.</div>`;
+
+  tbody.innerHTML = rows.map(r=>{
+    const daysDisp = r.daysRemaining >= 999 ? '—' : Math.round(r.daysRemaining)+'d';
+    const badge = r.runsOut
+      ? '<span class="badge warn"><i class="ti ti-alert-triangle" style="font-size:11px"></i> Order</span>'
+      : '<span class="badge ok"><i class="ti ti-check" style="font-size:11px"></i> OK</span>';
+    return `<tr class="${r.runsOut?'low-row':''}">
+      <td><strong>${r.s.name}</strong></td>
+      <td>${r.user.name}</td>
+      <td class="r">${Math.round(r.caps)}</td>
+      <td class="r">${Math.round(r.weekly)}</td>
+      <td class="r">${Math.round(r.monthly)}</td>
+      <td class="r">${daysDisp}</td>
+      <td class="r">${badge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function showOrderList(){
+  const today = new Date();
+  const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  const daysLeft = Math.max(1, daysInMonth - today.getDate());
+  const lines = ['ORDER LIST — ' + today.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),''];
+  let hasItems = false;
+
+  state.users.forEach(user=>{
+    const needed = user.supplements.filter(s=>{
+      const daily = s.dosePerSession * (s.times.length||1);
+      return daily > 0 && (s.bottles * s.capPerBottle) / daily < daysLeft;
+    });
+    if(needed.length){
+      lines.push(user.name.toUpperCase()+':');
+      needed.forEach(s=>{
+        const daily = s.dosePerSession * (s.times.length||1);
+        const onHand = s.bottles * s.capPerBottle;
+        const needCaps = Math.max(0, (daily*30) - onHand);
+        const needBottles = Math.ceil(needCaps / s.capPerBottle);
+        lines.push(`  • ${s.name}`);
+        lines.push(`    Need: ${needBottles} bottle${needBottles!==1?'s':''} (~${Math.round(needCaps)} caps)`);
+        lines.push(`    On hand: ${Math.round(onHand)} caps | Monthly use: ${Math.round(daily*30)} caps`);
+      });
+      lines.push('');
+      hasItems = true;
+    }
+  });
+
+  const el = document.getElementById('order-output');
+  if(!hasItems){
+    el.innerHTML='<div class="alert success" style="margin-top:10px"><i class="ti ti-check"></i> All supplements are stocked for next month. Nothing to order.</div>';
+    return;
+  }
+
+  const text = lines.join('\n');
+  el.innerHTML=`<div class="order-list">${text}</div>
+    <button class="btn" style="margin-top:10px" onclick="copyOrder('${encodeURIComponent(text)}',this)"><i class="ti ti-copy"></i> Copy to clipboard</button>`;
+}
+
+function copyOrder(encoded, btn){
+  const text = decodeURIComponent(encoded);
+  navigator.clipboard.writeText(text).then(()=>{
+    btn.innerHTML='<i class="ti ti-check"></i> Copied!';
+    setTimeout(()=>btn.innerHTML='<i class="ti ti-copy"></i> Copy to clipboard', 2500);
+  });
+}
+
+load();
+</script>
+</body>
+</html>
