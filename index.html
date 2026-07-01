@@ -34,7 +34,7 @@
   .app{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
   h1{font-size:20px;font-weight:500;margin-bottom:1.25rem;display:flex;align-items:center;gap:10px}
   h1 span{font-size:13px;font-weight:400;color:var(--text-muted)}
-  .nav{display:flex;gap:8px;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:1rem}
+  .nav{display:flex;gap:8px;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:1rem;flex-wrap:wrap}
   .nav-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius);padding:8px 16px;font-size:14px;cursor:pointer;color:var(--text-secondary);font-family:var(--font);display:flex;align-items:center;gap:6px}
   .nav-btn.active{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
   .nav-btn:hover:not(.active){background:var(--surface-1)}
@@ -47,6 +47,7 @@
   select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
   .btn{height:36px;padding:0 16px;border:1px solid var(--border-strong);border-radius:var(--radius);background:transparent;color:var(--text);font-size:14px;cursor:pointer;font-family:var(--font);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
   .btn:hover{background:var(--surface-1)}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
   .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
   .btn.primary:hover{opacity:.9}
   .btn.danger{color:var(--danger);border-color:var(--danger-border)}
@@ -56,8 +57,8 @@
   .btn.fullscript{background:#2d7a4f;color:#fff;border-color:#2d7a4f;text-decoration:none}
   .btn.fullscript:hover{opacity:.9}
   .field{flex:1;min-width:120px}
-  .field-sm{flex:0 0 100px}
-  .field-xs{flex:0 0 80px}
+  .field-sm{flex:0 0 110px}
+  .field-xs{flex:0 0 85px}
   .supp-row{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
   .supp-row:last-child{border-bottom:none}
   .supp-name{font-size:14px;font-weight:500}
@@ -90,14 +91,15 @@
   .alert.info{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
   .alert.danger{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border)}
   .alert.success{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
+  .alert.warning{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border)}
   .order-list{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-family:monospace;font-size:13px;white-space:pre-wrap;margin-top:10px;line-height:1.7}
   .divider{height:1px;background:var(--border);margin:1rem 0}
   .section-title{font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
   .empty{text-align:center;padding:2rem;color:var(--text-muted);font-size:14px}
-  .user-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px;font-size:14px;cursor:pointer}
-  .user-chip:hover{border-color:var(--accent);color:var(--accent)}
-  .user-chip.active-chip{background:var(--accent-bg);border-color:var(--accent-border);color:var(--accent-text)}
-  .user-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem}
+  .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;margin-left:4px}
+  .sync-dot.syncing{background:var(--warning-text);animation:pulse 1s infinite}
+  .sync-dot.error{background:var(--danger)}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
   @media(max-width:600px){
     .inv-table th:nth-child(4),.inv-table td:nth-child(4){display:none}
     .row{flex-direction:column}
@@ -107,7 +109,15 @@
 </head>
 <body>
 <div class="app">
-  <h1><i class="ti ti-pill"></i> Supplement Tracker <span>family inventory</span></h1>
+  <h1>
+    <i class="ti ti-pill"></i> Supplement Tracker
+    <span>family inventory</span>
+    <span style="margin-left:auto;font-size:12px;display:flex;align-items:center;gap:6px" id="sync-status">
+      <span class="sync-dot syncing" id="sync-dot"></span>
+      <span id="sync-label">Connecting...</span>
+    </span>
+  </h1>
+
   <div class="nav">
     <button class="nav-btn active" onclick="showScreen('home',this)"><i class="ti ti-home"></i> Home</button>
     <button class="nav-btn" onclick="showScreen('maintenance',this)"><i class="ti ti-settings"></i> Maintenance</button>
@@ -127,7 +137,7 @@
           <label>Number of days</label>
           <input type="number" id="home-days" min="1" max="31" value="1" oninput="loadHomePreview()">
         </div>
-        <button class="btn primary" onclick="logUsage()"><i class="ti ti-check"></i> Submit</button>
+        <button class="btn primary" onclick="logUsage()" id="log-btn"><i class="ti ti-check"></i> Submit</button>
       </div>
       <div id="home-preview"></div>
     </div>
@@ -144,7 +154,6 @@
       </div>
       <div id="user-list"></div>
     </div>
-
     <div class="card" id="supp-card" style="display:none">
       <div class="card-title"><i class="ti ti-pill"></i> Supplements — <span id="supp-card-user" style="color:var(--accent-text)"></span></div>
       <div class="section-title">Add supplement</div>
@@ -204,72 +213,122 @@
   </div>
 </div>
 
+<!-- Firebase v9 compat (works as plain script tags, no bundler needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <script>
-const KEY = 'supp_tracker_v2';
+// ── Firebase init ──────────────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyAJS_UAgAS2PeI4n3Aki5808c8gcuzqdDw",
+  authDomain: "supplement-tracker-fc966.firebaseapp.com",
+  projectId: "supplement-tracker-fc966",
+  storageBucket: "supplement-tracker-fc966.firebasestorage.app",
+  messagingSenderId: "252314158309",
+  appId: "1:252314158309:web:e999c59cc40ef14a36c00c"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const STATE_DOC = db.collection('app').doc('state');
+
+// ── App state ──────────────────────────────────────────────────
 let state = {users:[]};
 let activeMainUser = null;
+let unsubscribe = null;
 
-function load(){
+// ── Sync status UI ─────────────────────────────────────────────
+function setSyncStatus(status, label){
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot' + (status==='syncing' ? ' syncing' : status==='error' ? ' error' : '');
+  lbl.textContent = label;
+}
+
+// ── Firestore real-time listener ───────────────────────────────
+function startListener(){
+  setSyncStatus('syncing','Connecting...');
+  unsubscribe = STATE_DOC.onSnapshot(snap=>{
+    if(snap.exists){
+      state = snap.data();
+      if(!state.users) state.users = [];
+    } else {
+      state = {users:[]};
+    }
+    setSyncStatus('ok','Synced');
+    renderAll();
+  }, err=>{
+    console.error(err);
+    setSyncStatus('error','Sync error');
+  });
+}
+
+async function saveState(){
+  setSyncStatus('syncing','Saving...');
   try{
-    const raw = localStorage.getItem(KEY);
-    if(raw) state = JSON.parse(raw);
-  }catch(e){}
-  init();
+    await STATE_DOC.set(state);
+    setSyncStatus('ok','Synced');
+  } catch(e){
+    console.error(e);
+    setSyncStatus('error','Save failed');
+  }
 }
 
-function save(){
-  localStorage.setItem(KEY, JSON.stringify(state));
-}
-
-function init(){
+function renderAll(){
   populateUserDropdown();
   renderUserList();
   renderInventory();
   loadHomePreview();
+  if(activeMainUser) renderSuppList();
 }
 
+// ── Navigation ─────────────────────────────────────────────────
 function showScreen(name, btn){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('screen-'+name).classList.add('active');
   btn.classList.add('active');
-  if(name==='inventory') renderInventory();
-  if(name==='home') loadHomePreview();
 }
 
+// ── Users ──────────────────────────────────────────────────────
 function populateUserDropdown(){
   const sel = document.getElementById('home-user');
   const prev = sel.value;
   sel.innerHTML = state.users.length===0
-    ? '<option value="">— add a user first —</option>'
+    ? '<option value="">— add a user in Maintenance —</option>'
     : state.users.map(u=>`<option value="${u.id}">${u.name}</option>`).join('');
   if(prev && state.users.find(u=>u.id===prev)) sel.value = prev;
 }
 
-// USERS
 function addUser(){
   const name = document.getElementById('new-user-name').value.trim();
   if(!name) return;
-  state.users.push({id: 'u'+Date.now(), name, supplements:[]});
+  if(!state.users) state.users=[];
+  state.users.push({id:'u'+Date.now(), name, supplements:[]});
   document.getElementById('new-user-name').value='';
-  save(); populateUserDropdown(); renderUserList();
+  saveState();
 }
 
 function deleteUser(id){
   if(!confirm('Delete this user and all their supplements?')) return;
   state.users = state.users.filter(u=>u.id!==id);
-  if(activeMainUser===id){ activeMainUser=null; document.getElementById('supp-card').style.display='none'; }
-  save(); populateUserDropdown(); renderUserList(); renderInventory();
+  if(activeMainUser===id){
+    activeMainUser=null;
+    document.getElementById('supp-card').style.display='none';
+  }
+  saveState();
 }
 
 function renderUserList(){
   const el = document.getElementById('user-list');
-  if(!state.users.length){ el.innerHTML='<div class="empty">No users yet. Add one above.</div>'; return; }
+  if(!state.users||!state.users.length){
+    el.innerHTML='<div class="empty">No users yet. Add one above.</div>';
+    return;
+  }
   el.innerHTML = state.users.map(u=>`
     <div class="supp-row" style="align-items:center">
       <div style="flex:1">
         <div class="supp-name">${u.name}</div>
-        <div class="supp-detail">${u.supplements.length} supplement${u.supplements.length!==1?'s':''}</div>
+        <div class="supp-detail">${(u.supplements||[]).length} supplement${(u.supplements||[]).length!==1?'s':''}</div>
       </div>
       <div style="display:flex;gap:8px">
         <button class="btn" onclick="openSuppCard('${u.id}')"><i class="ti ti-pill"></i> Manage supplements</button>
@@ -278,7 +337,7 @@ function renderUserList(){
     </div>`).join('');
 }
 
-// SUPPLEMENTS
+// ── Supplements ────────────────────────────────────────────────
 function openSuppCard(id){
   activeMainUser = id;
   const user = state.users.find(u=>u.id===id);
@@ -288,9 +347,7 @@ function openSuppCard(id){
   document.getElementById('supp-card').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function toggleTag(btn){
-  btn.classList.toggle('sel');
-}
+function toggleTag(btn){ btn.classList.toggle('sel'); }
 
 function getSelectedTags(){
   return Array.from(document.querySelectorAll('#ns-tags .tag-btn.sel')).map(b=>b.textContent.trim());
@@ -301,24 +358,25 @@ function addSupp(){
   if(!user) return;
   const name = document.getElementById('ns-name').value.trim();
   if(!name){ alert('Enter a supplement name.'); return; }
-  const cap = parseInt(document.getElementById('ns-cap').value)||60;
-  const bot = parseFloat(document.getElementById('ns-bot').value)||1;
+  const cap  = parseInt(document.getElementById('ns-cap').value)||60;
+  const bot  = parseFloat(document.getElementById('ns-bot').value)||1;
   const dose = parseInt(document.getElementById('ns-dose').value)||1;
   const times = getSelectedTags();
+  if(!user.supplements) user.supplements=[];
   user.supplements.push({id:'s'+Date.now(), name, capPerBottle:cap, bottles:bot, dosePerSession:dose, times});
   document.getElementById('ns-name').value='';
   document.getElementById('ns-cap').value='60';
   document.getElementById('ns-bot').value='1';
   document.getElementById('ns-dose').value='1';
   document.querySelectorAll('#ns-tags .tag-btn').forEach(b=>b.classList.remove('sel'));
-  save(); renderSuppList(); renderInventory();
+  saveState();
 }
 
 function deleteSupp(uid, sid){
   if(!confirm('Remove this supplement?')) return;
   const user = state.users.find(u=>u.id===uid);
   if(user) user.supplements = user.supplements.filter(s=>s.id!==sid);
-  save(); renderSuppList(); renderInventory();
+  saveState();
 }
 
 function addBottle(uid, sid){
@@ -326,56 +384,50 @@ function addBottle(uid, sid){
   const supp = user && user.supplements.find(s=>s.id===sid);
   if(!supp) return;
   supp.bottles += 1;
-  save(); renderSuppList(); renderInventory();
-}
-
-function editBottles(uid, sid, val){
-  const user = state.users.find(u=>u.id===uid);
-  const supp = user && user.supplements.find(s=>s.id===sid);
-  if(!supp) return;
-  const caps = parseFloat(val);
-  if(!isNaN(caps) && caps >= 0) supp.bottles = caps / supp.capPerBottle;
-  save(); renderInventory();
+  saveState();
 }
 
 function renderSuppList(){
   const user = state.users.find(u=>u.id===activeMainUser);
   const el = document.getElementById('supp-list');
-  if(!user || !user.supplements.length){ el.innerHTML='<div class="empty">No supplements yet.</div>'; return; }
+  if(!user||!user.supplements||!user.supplements.length){
+    el.innerHTML='<div class="empty">No supplements yet.</div>';
+    return;
+  }
   el.innerHTML = user.supplements.map(s=>{
     const caps = Math.round(s.bottles * s.capPerBottle);
-    const timeBadges = s.times.map(t=>`<span class="badge ${t.toLowerCase()}">${t}</span>`).join(' ');
+    const timeBadges = (s.times||[]).map(t=>`<span class="badge ${t.toLowerCase()}">${t}</span>`).join(' ');
     return `<div class="supp-row">
       <div style="flex:1">
         <div class="supp-name">${s.name}</div>
-        <div class="supp-detail">${caps} caps on hand &nbsp;·&nbsp; ${s.bottles.toFixed(1)} bottles &nbsp;·&nbsp; ${s.capPerBottle} caps/bottle &nbsp;·&nbsp; ${s.dosePerSession} cap${s.dosePerSession!==1?'s':''}/session</div>
-        <div class="time-tags">${timeBadges || '<span style="font-size:12px;color:var(--text-muted)">No times set</span>'}</div>
+        <div class="supp-detail">${caps} caps on hand &nbsp;·&nbsp; ${parseFloat(s.bottles).toFixed(1)} bottles &nbsp;·&nbsp; ${s.capPerBottle} caps/bottle &nbsp;·&nbsp; ${s.dosePerSession} cap${s.dosePerSession!==1?'s':''}/session</div>
+        <div class="time-tags">${timeBadges||'<span style="font-size:12px;color:var(--text-muted)">No times set</span>'}</div>
       </div>
       <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
-        <button class="btn" onclick="addBottle('${user.id}','${s.id}')" title="Add 1 bottle"><i class="ti ti-plus"></i> 1 bottle</button>
+        <button class="btn" onclick="addBottle('${user.id}','${s.id}')"><i class="ti ti-plus"></i> 1 bottle</button>
         <button class="btn danger" onclick="deleteSupp('${user.id}','${s.id}')"><i class="ti ti-trash"></i></button>
       </div>
     </div>`;
   }).join('');
 }
 
-// HOME — USAGE LOGGING
+// ── Home / usage logging ───────────────────────────────────────
 function loadHomePreview(){
   const userId = document.getElementById('home-user').value;
   const user = state.users.find(u=>u.id===userId);
   const days = Math.max(1, parseInt(document.getElementById('home-days').value)||1);
   const el = document.getElementById('home-preview');
-  if(!user || !user.supplements.length){
+  if(!user||!user.supplements||!user.supplements.length){
     el.innerHTML='<div class="empty" style="padding:1rem 0">No supplements configured for this user.</div>';
     return;
   }
   el.innerHTML = `<div style="font-size:13px;color:var(--text-secondary);margin:10px 0 6px">Preview — ${days} day${days!==1?'s':''} of usage for ${user.name}:</div>`
     + user.supplements.map(s=>{
-      const sess = s.times.length||1;
-      const used = s.dosePerSession * sess * days;
-      const before = Math.round(s.bottles * s.capPerBottle);
+      const sess  = (s.times||[]).length||1;
+      const used  = s.dosePerSession * sess * days;
+      const before= Math.round(s.bottles * s.capPerBottle);
       const after = Math.max(0, before - used);
-      const timeBadges = s.times.map(t=>`<span class="badge ${t.toLowerCase()}">${t}</span>`).join(' ');
+      const timeBadges = (s.times||[]).map(t=>`<span class="badge ${t.toLowerCase()}">${t}</span>`).join(' ');
       return `<div class="supp-row">
         <div style="flex:1">
           <div class="supp-name">${s.name}</div>
@@ -389,46 +441,45 @@ function loadHomePreview(){
     }).join('');
 }
 
-function logUsage(){
+async function logUsage(){
   const userId = document.getElementById('home-user').value;
-  const days = Math.max(1, parseInt(document.getElementById('home-days').value)||1);
-  const user = state.users.find(u=>u.id===userId);
-  const alertEl = document.getElementById('home-alert');
+  const days   = Math.max(1, parseInt(document.getElementById('home-days').value)||1);
+  const user   = state.users.find(u=>u.id===userId);
+  const alertEl= document.getElementById('home-alert');
   if(!user){ alertEl.innerHTML='<div class="alert danger"><i class="ti ti-alert-circle"></i> Select a user first.</div>'; return; }
-  if(!user.supplements.length){ alertEl.innerHTML='<div class="alert danger"><i class="ti ti-alert-circle"></i> No supplements configured for this user.</div>'; return; }
+  if(!user.supplements||!user.supplements.length){ alertEl.innerHTML='<div class="alert danger"><i class="ti ti-alert-circle"></i> No supplements configured for this user.</div>'; return; }
+  const btn = document.getElementById('log-btn');
+  btn.disabled = true;
   user.supplements.forEach(s=>{
-    const sess = s.times.length||1;
-    const used = s.dosePerSession * sess * days;
-    const newCaps = Math.max(0, s.bottles * s.capPerBottle - used);
-    s.bottles = newCaps / s.capPerBottle;
+    const sess   = (s.times||[]).length||1;
+    const used   = s.dosePerSession * sess * days;
+    const newCaps= Math.max(0, s.bottles * s.capPerBottle - used);
+    s.bottles    = newCaps / s.capPerBottle;
   });
-  save();
+  await saveState();
+  btn.disabled = false;
   alertEl.innerHTML=`<div class="alert success"><i class="ti ti-check"></i> Logged ${days} day${days!==1?'s':''} of supplements for ${user.name}.</div>`;
   setTimeout(()=>alertEl.innerHTML='', 4000);
-  loadHomePreview();
-  renderInventory();
 }
 
-// INVENTORY
+// ── Inventory ──────────────────────────────────────────────────
 function renderInventory(){
-  const today = new Date();
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
-  const daysLeft = Math.max(1, daysInMonth - today.getDate());
-
+  const today      = new Date();
+  const daysInMonth= new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  const daysLeft   = Math.max(1, daysInMonth - today.getDate());
   let rows = [];
-  state.users.forEach(user=>{
-    user.supplements.forEach(s=>{
-      const daily = s.dosePerSession * (s.times.length||1);
-      const caps = s.bottles * s.capPerBottle;
-      const daysLeft_ = daily > 0 ? caps / daily : 9999;
-      const runsOut = daysLeft_ < daysLeft;
-      rows.push({user, s, caps, daily, weekly:daily*7, monthly:daily*30, daysRemaining:daysLeft_, runsOut});
+  (state.users||[]).forEach(user=>{
+    (user.supplements||[]).forEach(s=>{
+      const daily  = s.dosePerSession * ((s.times||[]).length||1);
+      const caps   = s.bottles * s.capPerBottle;
+      const daysRem= daily>0 ? caps/daily : 9999;
+      rows.push({user, s, caps, daily, weekly:daily*7, monthly:daily*30, daysRem, runsOut:daysRem<daysLeft});
     });
   });
 
   const metricsEl = document.getElementById('inv-metrics');
-  const alertEl = document.getElementById('inv-alert');
-  const tbody = document.getElementById('inv-tbody');
+  const alertEl   = document.getElementById('inv-alert');
+  const tbody     = document.getElementById('inv-tbody');
 
   if(!rows.length){
     metricsEl.innerHTML='';
@@ -438,19 +489,19 @@ function renderInventory(){
   }
 
   const lowCount = rows.filter(r=>r.runsOut).length;
-  metricsEl.innerHTML = `
+  metricsEl.innerHTML=`
     <div class="metric"><div class="metric-label">Total supplements</div><div class="metric-value">${rows.length}</div></div>
-    <div class="metric"><div class="metric-label">Users tracked</div><div class="metric-value">${state.users.length}</div></div>
+    <div class="metric"><div class="metric-label">Users tracked</div><div class="metric-value">${(state.users||[]).length}</div></div>
     <div class="metric"><div class="metric-label">Days left in month</div><div class="metric-value">${daysLeft}</div></div>
     <div class="metric"><div class="metric-label">Need to order</div><div class="metric-value ${lowCount>0?'danger':''}">${lowCount}</div></div>`;
 
-  alertEl.innerHTML = lowCount > 0
+  alertEl.innerHTML = lowCount>0
     ? `<div class="alert danger"><i class="ti ti-alert-triangle"></i> ${lowCount} supplement${lowCount>1?'s':''} will run out before next month's order.</div>`
     : `<div class="alert success"><i class="ti ti-check"></i> All supplements should last until next month's order.</div>`;
 
   tbody.innerHTML = rows.map(r=>{
-    const daysDisp = r.daysRemaining >= 999 ? '—' : Math.round(r.daysRemaining)+'d';
-    const badge = r.runsOut
+    const daysDisp = r.daysRem>=999 ? '—' : Math.round(r.daysRem)+'d';
+    const badge    = r.runsOut
       ? '<span class="badge warn"><i class="ti ti-alert-triangle" style="font-size:11px"></i> Order</span>'
       : '<span class="badge ok"><i class="ti ti-check" style="font-size:11px"></i> OK</span>';
     return `<tr class="${r.runsOut?'low-row':''}">
@@ -465,25 +516,26 @@ function renderInventory(){
   }).join('');
 }
 
+// ── Order list ─────────────────────────────────────────────────
 function showOrderList(){
-  const today = new Date();
-  const daysInMonth = new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
-  const daysLeft = Math.max(1, daysInMonth - today.getDate());
-  const lines = ['ORDER LIST — ' + today.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),''];
-  let hasItems = false;
+  const today      = new Date();
+  const daysInMonth= new Date(today.getFullYear(), today.getMonth()+1, 0).getDate();
+  const daysLeft   = Math.max(1, daysInMonth - today.getDate());
+  const lines      = ['ORDER LIST — '+today.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}),''];
+  let hasItems     = false;
 
-  state.users.forEach(user=>{
-    const needed = user.supplements.filter(s=>{
-      const daily = s.dosePerSession * (s.times.length||1);
-      return daily > 0 && (s.bottles * s.capPerBottle) / daily < daysLeft;
+  (state.users||[]).forEach(user=>{
+    const needed = (user.supplements||[]).filter(s=>{
+      const daily = s.dosePerSession * ((s.times||[]).length||1);
+      return daily>0 && (s.bottles*s.capPerBottle)/daily < daysLeft;
     });
     if(needed.length){
       lines.push(user.name.toUpperCase()+':');
       needed.forEach(s=>{
-        const daily = s.dosePerSession * (s.times.length||1);
-        const onHand = s.bottles * s.capPerBottle;
-        const needCaps = Math.max(0, (daily*30) - onHand);
-        const needBottles = Math.ceil(needCaps / s.capPerBottle);
+        const daily     = s.dosePerSession * ((s.times||[]).length||1);
+        const onHand    = s.bottles * s.capPerBottle;
+        const needCaps  = Math.max(0,(daily*30)-onHand);
+        const needBottles=Math.ceil(needCaps/s.capPerBottle);
         lines.push(`  • ${s.name}`);
         lines.push(`    Need: ${needBottles} bottle${needBottles!==1?'s':''} (~${Math.round(needCaps)} caps)`);
         lines.push(`    On hand: ${Math.round(onHand)} caps | Monthly use: ${Math.round(daily*30)} caps`);
@@ -498,21 +550,22 @@ function showOrderList(){
     el.innerHTML='<div class="alert success" style="margin-top:10px"><i class="ti ti-check"></i> All supplements are stocked for next month. Nothing to order.</div>';
     return;
   }
-
   const text = lines.join('\n');
   el.innerHTML=`<div class="order-list">${text}</div>
-    <button class="btn" style="margin-top:10px" onclick="copyOrder('${encodeURIComponent(text)}',this)"><i class="ti ti-copy"></i> Copy to clipboard</button>`;
+    <button class="btn" style="margin-top:10px" onclick="copyOrder(this)"><i class="ti ti-copy"></i> Copy to clipboard</button>`;
+  el._orderText = text;
 }
 
-function copyOrder(encoded, btn){
-  const text = decodeURIComponent(encoded);
+function copyOrder(btn){
+  const text = document.getElementById('order-output')._orderText;
   navigator.clipboard.writeText(text).then(()=>{
     btn.innerHTML='<i class="ti ti-check"></i> Copied!';
-    setTimeout(()=>btn.innerHTML='<i class="ti ti-copy"></i> Copy to clipboard', 2500);
+    setTimeout(()=>btn.innerHTML='<i class="ti ti-copy"></i> Copy to clipboard',2500);
   });
 }
 
-load();
+// ── Boot ───────────────────────────────────────────────────────
+startListener();
 </script>
 </body>
 </html>
