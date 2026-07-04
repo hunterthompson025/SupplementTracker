@@ -261,10 +261,30 @@
 </div>
 
 <!-- Firebase v9 compat (works as plain script tags, no bundler needed) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js" crossorigin="anonymous"></script>
 
 <script>
+// ── Global error visibility (so real errors show up instead of "Script error.") ──
+window.addEventListener('error', (e)=>{
+  console.error('Uncaught error:', e.error || e.message, e);
+  showFatalError((e.error && (e.error.stack || e.error.message)) || e.message || 'Unknown script error');
+});
+window.addEventListener('unhandledrejection', (e)=>{
+  console.error('Unhandled promise rejection:', e.reason);
+  showFatalError((e.reason && (e.reason.stack || e.reason.message)) || String(e.reason));
+});
+function showFatalError(detail){
+  let el = document.getElementById('fatal-error-banner');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'fatal-error-banner';
+    el.style.cssText = 'position:fixed;bottom:10px;left:10px;right:10px;z-index:9999;background:#fcebeb;color:#a32d2d;border:1px solid #f7c1c1;border-radius:8px;padding:12px 14px;font-family:monospace;font-size:12px;white-space:pre-wrap;max-height:40vh;overflow:auto';
+    document.body.appendChild(el);
+  }
+  el.textContent = 'Error: ' + detail;
+}
+
 // ── Firebase init ──────────────────────────────────────────────
 const firebaseConfig = {
   apiKey: "AIzaSyAJS_UAgAS2PeI4n3Aki5808c8gcuzqdDw",
