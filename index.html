@@ -189,7 +189,7 @@
         </div>
       </div>
       <div id="ns-users-wrap" style="margin-bottom:14px">
-        <label style="margin-bottom:8px;display:block">Assign to user(s)</label>
+        <label id="ns-users-label" style="margin-bottom:8px;display:block">Assign to user(s)</label>
         <div id="ns-users"></div>
       </div>
       <div style="display:flex;gap:8px">
@@ -423,13 +423,16 @@ function openSuppCard(id){
   document.getElementById('supp-card').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function renderUserCheckboxes(){
+function renderUserCheckboxes(lockUserId){
   const el = document.getElementById('ns-users');
   if(!el) return;
-  el.innerHTML = (state.users||[]).map(u=>`
-    <label class="user-check">
-      <input type="checkbox" value="${u.id}" ${u.id===activeMainUser?'checked':''}> ${u.name}
-    </label>`).join('');
+  el.innerHTML = (state.users||[]).map(u=>{
+    const isLocked = lockUserId && u.id===lockUserId;
+    const checked  = isLocked || (!lockUserId && u.id===activeMainUser);
+    return `<label class="user-check">
+      <input type="checkbox" value="${u.id}" ${checked?'checked':''} ${isLocked?'disabled':''}> ${u.name}${isLocked?' (current)':''}
+    </label>`;
+  }).join('');
 }
 
 function toggleTag(btn){ btn.classList.toggle('sel'); }
@@ -447,6 +450,7 @@ function resetSuppForm(){
   document.getElementById('ns-dose').value='1';
   document.querySelectorAll('#ns-tags .tag-btn').forEach(b=>b.classList.remove('sel'));
   document.getElementById('ns-users-wrap').style.display='block';
+  document.getElementById('ns-users-label').textContent='Assign to user(s)';
   document.getElementById('ns-edit-note').style.display='none';
   document.getElementById('ns-section-title').textContent='Add supplement';
   document.getElementById('ns-submit-btn').innerHTML='<i class="ti ti-plus"></i> Add supplement';
@@ -466,7 +470,9 @@ function startEditSupp(uid, sid){
   document.getElementById('ns-amount').value = parseFloat(supp.bottles).toFixed(2).replace(/\.?0+$/,'') || supp.bottles;
   document.getElementById('ns-dose').value = supp.dosePerSession;
   document.querySelectorAll('#ns-tags .tag-btn').forEach(b=>b.classList.toggle('sel', (supp.times||[]).includes(b.textContent.trim())));
-  document.getElementById('ns-users-wrap').style.display='none';
+  document.getElementById('ns-users-wrap').style.display='block';
+  document.getElementById('ns-users-label').textContent='Also assign to additional user(s)';
+  renderUserCheckboxes(uid);
   document.getElementById('ns-edit-note').style.display='flex';
   document.getElementById('ns-edit-note').innerHTML = `<i class="ti ti-edit"></i> Editing "${supp.name}" for ${user.name}`;
   document.getElementById('ns-section-title').textContent='Edit supplement';
@@ -500,7 +506,8 @@ function addSupp(){
   const bottles = caps/cap;
 
   if(editingSupp){
-    const user = state.users.find(u=>u.id===editingSupp.uid);
+    const {uid: ownerUid} = editingSupp;
+    const user = state.users.find(u=>u.id===ownerUid);
     const supp = user && user.supplements.find(s=>s.id===editingSupp.sid);
     if(supp){
       supp.name = name;
@@ -510,6 +517,15 @@ function addSupp(){
       supp.dosePerSession = dose;
       supp.times = times;
     }
+    // any additional users checked (besides the locked current owner) get a new copy of this supplement
+    const checked = Array.from(document.querySelectorAll('#ns-users input[type=checkbox]:checked')).map(c=>c.value);
+    const extraUsers = checked.filter(id=>id!==ownerUid);
+    extraUsers.forEach((extraUid,i)=>{
+      const extraUser = state.users.find(u=>u.id===extraUid);
+      if(!extraUser) return;
+      if(!extraUser.supplements) extraUser.supplements=[];
+      extraUser.supplements.push({id:'s'+Date.now()+'_'+i+'_e', name, brand, capPerBottle:cap, bottles, dosePerSession:dose, times});
+    });
     editingSupp = null;
   } else {
     const checked = Array.from(document.querySelectorAll('#ns-users input[type=checkbox]:checked')).map(c=>c.value);
