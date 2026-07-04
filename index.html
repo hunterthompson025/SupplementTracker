@@ -56,12 +56,14 @@
   .btn.success:hover{opacity:.9}
   .btn.fullscript{background:#2d7a4f;color:#fff;border-color:#2d7a4f;text-decoration:none}
   .btn.fullscript:hover{opacity:.9}
+  .btn.small{height:26px;padding:0 8px;font-size:11px}
   .field{flex:1;min-width:120px}
   .field-sm{flex:0 0 110px}
   .field-xs{flex:0 0 85px}
   .supp-row{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
   .supp-row:last-child{border-bottom:none}
   .supp-name{font-size:14px;font-weight:500}
+  .supp-brand{font-size:12px;color:var(--accent-text);margin-top:1px}
   .supp-detail{font-size:12px;color:var(--text-secondary);margin-top:2px}
   .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:12px;background:var(--surface-1);border:1px solid var(--border);color:var(--text-secondary)}
   .badge.morning{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border)}
@@ -99,6 +101,7 @@
   .sync-dot{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;margin-left:4px}
   .sync-dot.syncing{background:var(--warning-text);animation:pulse 1s infinite}
   .sync-dot.error{background:var(--danger)}
+  .user-check{display:inline-flex;align-items:center;gap:5px;margin:0 12px 8px 0;font-size:13px;color:var(--text-secondary)}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
   @media(max-width:600px){
     .inv-table th:nth-child(4),.inv-table td:nth-child(4){display:none}
@@ -156,11 +159,24 @@
     </div>
     <div class="card" id="supp-card" style="display:none">
       <div class="card-title"><i class="ti ti-pill"></i> Supplements — <span id="supp-card-user" style="color:var(--accent-text)"></span></div>
-      <div class="section-title">Add supplement</div>
+
+      <div class="section-title" id="ns-section-title">Add supplement</div>
+      <div class="alert info" id="ns-edit-note" style="display:none"></div>
+
       <div class="row">
         <div class="field"><label>Supplement name</label><input type="text" id="ns-name" placeholder="e.g. Vitamin D3"></div>
+        <div class="field"><label>Brand</label><input type="text" id="ns-brand" placeholder="e.g. Thorne"></div>
+      </div>
+      <div class="row">
         <div class="field-sm"><label>Caps per bottle</label><input type="number" id="ns-cap" min="1" value="60"></div>
-        <div class="field-sm"><label>Bottles on hand</label><input type="number" id="ns-bot" min="0" value="1" step="0.5"></div>
+        <div class="field-sm">
+          <label>Unit</label>
+          <select id="ns-unit">
+            <option value="bottles">Bottles</option>
+            <option value="capsules">Capsules</option>
+          </select>
+        </div>
+        <div class="field-sm"><label>On hand (in unit above)</label><input type="number" id="ns-amount" min="0" value="1" step="0.1"></div>
         <div class="field-xs"><label>Dose (caps)</label><input type="number" id="ns-dose" min="1" value="1"></div>
       </div>
       <div style="margin-bottom:14px">
@@ -172,7 +188,14 @@
           <button class="tag-btn bedtime" onclick="toggleTag(this)">Bedtime</button>
         </div>
       </div>
-      <button class="btn primary" onclick="addSupp()"><i class="ti ti-plus"></i> Add supplement</button>
+      <div id="ns-users-wrap" style="margin-bottom:14px">
+        <label style="margin-bottom:8px;display:block">Assign to user(s)</label>
+        <div id="ns-users"></div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn primary" onclick="addSupp()" id="ns-submit-btn"><i class="ti ti-plus"></i> Add supplement</button>
+        <button class="btn" onclick="cancelEditSupp()" id="ns-cancel-btn" style="display:none"><i class="ti ti-x"></i> Cancel</button>
+      </div>
       <div class="divider"></div>
       <div class="section-title">Current supplements</div>
       <div id="supp-list"></div>
@@ -202,11 +225,35 @@
         </table>
       </div>
     </div>
+
+    <div class="card">
+      <div class="card-title"><i class="ti ti-clipboard-check"></i> Cycle count</div>
+      <div class="row">
+        <div class="field">
+          <label>Supplement</label>
+          <select id="cc-select"></select>
+        </div>
+        <div class="field-sm">
+          <label>Unit</label>
+          <select id="cc-unit">
+            <option value="bottles">Bottles</option>
+            <option value="capsules">Capsules</option>
+          </select>
+        </div>
+        <div class="field-sm">
+          <label>New on-hand count</label>
+          <input type="number" id="cc-amount" min="0" step="0.1" placeholder="e.g. 45">
+        </div>
+        <button class="btn success" onclick="submitCycleCount()"><i class="ti ti-check"></i> Update count</button>
+      </div>
+      <div id="cc-alert"></div>
+    </div>
+
     <div class="card">
       <div class="card-title"><i class="ti ti-shopping-cart"></i> Ordering</div>
       <div class="row" style="flex-wrap:wrap">
         <button class="btn success" onclick="showOrderList()"><i class="ti ti-list"></i> Generate order list</button>
-        <a href="https://us.fullscript.com/sign_in" target="_blank" class="btn fullscript"><i class="ti ti-external-link"></i> Go to Fullscript</a>
+        <a href="https://www.us.fullscript.com/login" target="_blank" class="btn fullscript"><i class="ti ti-external-link"></i> Go to Fullscript</a>
       </div>
       <div id="order-output"></div>
     </div>
@@ -234,6 +281,7 @@ const STATE_DOC = db.collection('app').doc('state');
 // ── App state ──────────────────────────────────────────────────
 let state = {users:[]};
 let activeMainUser = null;
+let editingSupp = null; // {uid, sid} when editing an existing supplement
 let unsubscribe = null;
 
 // ── Sync status UI ─────────────────────────────────────────────
@@ -277,8 +325,12 @@ function renderAll(){
   populateUserDropdown();
   renderUserList();
   renderInventory();
+  renderCycleCountOptions();
   loadHomePreview();
-  if(activeMainUser) renderSuppList();
+  if(activeMainUser){
+    renderUserCheckboxes();
+    renderSuppList();
+  }
 }
 
 // ── Navigation ─────────────────────────────────────────────────
@@ -313,6 +365,7 @@ function deleteUser(id){
   state.users = state.users.filter(u=>u.id!==id);
   if(activeMainUser===id){
     activeMainUser=null;
+    editingSupp=null;
     document.getElementById('supp-card').style.display='none';
   }
   saveState();
@@ -340,11 +393,23 @@ function renderUserList(){
 // ── Supplements ────────────────────────────────────────────────
 function openSuppCard(id){
   activeMainUser = id;
+  editingSupp = null;
   const user = state.users.find(u=>u.id===id);
   document.getElementById('supp-card').style.display='block';
   document.getElementById('supp-card-user').textContent = user.name;
+  resetSuppForm();
+  renderUserCheckboxes();
   renderSuppList();
   document.getElementById('supp-card').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function renderUserCheckboxes(){
+  const el = document.getElementById('ns-users');
+  if(!el) return;
+  el.innerHTML = (state.users||[]).map(u=>`
+    <label class="user-check">
+      <input type="checkbox" value="${u.id}" ${u.id===activeMainUser?'checked':''}> ${u.name}
+    </label>`).join('');
 }
 
 function toggleTag(btn){ btn.classList.toggle('sel'); }
@@ -353,27 +418,99 @@ function getSelectedTags(){
   return Array.from(document.querySelectorAll('#ns-tags .tag-btn.sel')).map(b=>b.textContent.trim());
 }
 
-function addSupp(){
-  const user = state.users.find(u=>u.id===activeMainUser);
-  if(!user) return;
-  const name = document.getElementById('ns-name').value.trim();
-  if(!name){ alert('Enter a supplement name.'); return; }
-  const cap  = parseInt(document.getElementById('ns-cap').value)||60;
-  const bot  = parseFloat(document.getElementById('ns-bot').value)||1;
-  const dose = parseInt(document.getElementById('ns-dose').value)||1;
-  const times = getSelectedTags();
-  if(!user.supplements) user.supplements=[];
-  user.supplements.push({id:'s'+Date.now(), name, capPerBottle:cap, bottles:bot, dosePerSession:dose, times});
+function resetSuppForm(){
   document.getElementById('ns-name').value='';
+  document.getElementById('ns-brand').value='';
   document.getElementById('ns-cap').value='60';
-  document.getElementById('ns-bot').value='1';
+  document.getElementById('ns-unit').value='bottles';
+  document.getElementById('ns-amount').value='1';
   document.getElementById('ns-dose').value='1';
   document.querySelectorAll('#ns-tags .tag-btn').forEach(b=>b.classList.remove('sel'));
+  document.getElementById('ns-users-wrap').style.display='block';
+  document.getElementById('ns-edit-note').style.display='none';
+  document.getElementById('ns-section-title').textContent='Add supplement';
+  document.getElementById('ns-submit-btn').innerHTML='<i class="ti ti-plus"></i> Add supplement';
+  document.getElementById('ns-cancel-btn').style.display='none';
+  renderUserCheckboxes();
+}
+
+function startEditSupp(uid, sid){
+  const user = state.users.find(u=>u.id===uid);
+  const supp = user && user.supplements.find(s=>s.id===sid);
+  if(!supp) return;
+  editingSupp = {uid, sid};
+  document.getElementById('ns-name').value = supp.name;
+  document.getElementById('ns-brand').value = supp.brand||'';
+  document.getElementById('ns-cap').value = supp.capPerBottle;
+  document.getElementById('ns-unit').value = 'bottles';
+  document.getElementById('ns-amount').value = parseFloat(supp.bottles).toFixed(2).replace(/\.?0+$/,'') || supp.bottles;
+  document.getElementById('ns-dose').value = supp.dosePerSession;
+  document.querySelectorAll('#ns-tags .tag-btn').forEach(b=>b.classList.toggle('sel', (supp.times||[]).includes(b.textContent.trim())));
+  document.getElementById('ns-users-wrap').style.display='none';
+  document.getElementById('ns-edit-note').style.display='flex';
+  document.getElementById('ns-edit-note').innerHTML = `<i class="ti ti-edit"></i> Editing "${supp.name}" for ${user.name}`;
+  document.getElementById('ns-section-title').textContent='Edit supplement';
+  document.getElementById('ns-submit-btn').innerHTML='<i class="ti ti-check"></i> Save changes';
+  document.getElementById('ns-cancel-btn').style.display='inline-flex';
+  document.getElementById('supp-card').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function cancelEditSupp(){
+  editingSupp = null;
+  resetSuppForm();
+}
+
+function amountToCaps(amount, unit, capPerBottle){
+  return unit==='capsules' ? amount : amount*capPerBottle;
+}
+
+function addSupp(){
+  const name = document.getElementById('ns-name').value.trim();
+  if(!name){ alert('Enter a supplement name.'); return; }
+  const brand = document.getElementById('ns-brand').value.trim();
+  const cap   = parseInt(document.getElementById('ns-cap').value)||60;
+  const unit  = document.getElementById('ns-unit').value;
+  const amount= parseFloat(document.getElementById('ns-amount').value);
+  const dose  = parseInt(document.getElementById('ns-dose').value)||1;
+  const times = getSelectedTags();
+
+  if(!amount || amount<=0){ alert('On-hand count must be greater than 0.'); return; }
+  const caps = amountToCaps(amount, unit, cap);
+  if(!caps || caps<=0){ alert('On-hand count must be greater than 0.'); return; }
+  const bottles = caps/cap;
+
+  if(editingSupp){
+    const user = state.users.find(u=>u.id===editingSupp.uid);
+    const supp = user && user.supplements.find(s=>s.id===editingSupp.sid);
+    if(supp){
+      supp.name = name;
+      supp.brand = brand;
+      supp.capPerBottle = cap;
+      supp.bottles = bottles;
+      supp.dosePerSession = dose;
+      supp.times = times;
+    }
+    editingSupp = null;
+  } else {
+    const checked = Array.from(document.querySelectorAll('#ns-users input[type=checkbox]:checked')).map(c=>c.value);
+    if(!checked.length){ alert('Select at least one user to assign this supplement to.'); return; }
+    checked.forEach((uid,i)=>{
+      const user = state.users.find(u=>u.id===uid);
+      if(!user) return;
+      if(!user.supplements) user.supplements=[];
+      user.supplements.push({id:'s'+Date.now()+'_'+i, name, brand, capPerBottle:cap, bottles, dosePerSession:dose, times});
+    });
+  }
+  resetSuppForm();
   saveState();
 }
 
 function deleteSupp(uid, sid){
   if(!confirm('Remove this supplement?')) return;
+  if(editingSupp && editingSupp.uid===uid && editingSupp.sid===sid){
+    editingSupp = null;
+    resetSuppForm();
+  }
   const user = state.users.find(u=>u.id===uid);
   if(user) user.supplements = user.supplements.filter(s=>s.id!==sid);
   saveState();
@@ -400,10 +537,12 @@ function renderSuppList(){
     return `<div class="supp-row">
       <div style="flex:1">
         <div class="supp-name">${s.name}</div>
+        ${s.brand?`<div class="supp-brand">${s.brand}</div>`:''}
         <div class="supp-detail">${caps} caps on hand &nbsp;·&nbsp; ${parseFloat(s.bottles).toFixed(1)} bottles &nbsp;·&nbsp; ${s.capPerBottle} caps/bottle &nbsp;·&nbsp; ${s.dosePerSession} cap${s.dosePerSession!==1?'s':''}/session</div>
         <div class="time-tags">${timeBadges||'<span style="font-size:12px;color:var(--text-muted)">No times set</span>'}</div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px">
+      <div style="display:flex;gap:6px;flex-shrink:0;margin-top:2px;flex-wrap:wrap">
+        <button class="btn" onclick="startEditSupp('${user.id}','${s.id}')"><i class="ti ti-edit"></i> Edit</button>
         <button class="btn" onclick="addBottle('${user.id}','${s.id}')"><i class="ti ti-plus"></i> 1 bottle</button>
         <button class="btn danger" onclick="deleteSupp('${user.id}','${s.id}')"><i class="ti ti-trash"></i></button>
       </div>
@@ -505,15 +644,68 @@ function renderInventory(){
       ? '<span class="badge warn"><i class="ti ti-alert-triangle" style="font-size:11px"></i> Order</span>'
       : '<span class="badge ok"><i class="ti ti-check" style="font-size:11px"></i> OK</span>';
     return `<tr class="${r.runsOut?'low-row':''}">
-      <td><strong>${r.s.name}</strong></td>
+      <td><strong>${r.s.name}</strong>${r.s.brand?`<div style="font-size:11px;color:var(--text-muted)">${r.s.brand}</div>`:''}</td>
       <td>${r.user.name}</td>
       <td class="r">${Math.round(r.caps)}</td>
       <td class="r">${Math.round(r.weekly)}</td>
       <td class="r">${Math.round(r.monthly)}</td>
       <td class="r">${daysDisp}</td>
-      <td class="r">${badge}</td>
+      <td class="r">
+        <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center">
+          ${badge}
+          <button class="btn small" onclick="prefillCycleCount('${r.user.id}','${r.s.id}')"><i class="ti ti-edit"></i></button>
+        </div>
+      </td>
     </tr>`;
   }).join('');
+}
+
+// ── Cycle count ────────────────────────────────────────────────
+function renderCycleCountOptions(){
+  const sel = document.getElementById('cc-select');
+  if(!sel) return;
+  const prev = sel.value;
+  let opts = [];
+  (state.users||[]).forEach(user=>{
+    (user.supplements||[]).forEach(s=>{
+      opts.push(`<option value="${user.id}|${s.id}">${user.name} — ${s.name}${s.brand?' ('+s.brand+')':''}</option>`);
+    });
+  });
+  sel.innerHTML = opts.length ? opts.join('') : '<option value="">— no supplements yet —</option>';
+  if(prev && Array.from(sel.options).some(o=>o.value===prev)) sel.value = prev;
+}
+
+function prefillCycleCount(uid, sid){
+  const sel = document.getElementById('cc-select');
+  sel.value = uid+'|'+sid;
+  const card = sel.closest('.card');
+  if(card) card.scrollIntoView({behavior:'smooth', block:'start'});
+  document.getElementById('cc-amount').focus();
+}
+
+function submitCycleCount(){
+  const sel     = document.getElementById('cc-select');
+  const alertEl = document.getElementById('cc-alert');
+  const val     = sel.value;
+  if(!val){ alertEl.innerHTML='<div class="alert danger"><i class="ti ti-alert-circle"></i> Select a supplement.</div>'; return; }
+
+  const [uid, sid] = val.split('|');
+  const user = state.users.find(u=>u.id===uid);
+  const supp = user && user.supplements.find(s=>s.id===sid);
+  if(!supp){ alertEl.innerHTML='<div class="alert danger"><i class="ti ti-alert-circle"></i> Supplement not found.</div>'; return; }
+
+  const unit   = document.getElementById('cc-unit').value;
+  const amount = parseFloat(document.getElementById('cc-amount').value);
+  if(!amount || amount<=0){ alertEl.innerHTML='<div class="alert danger"><i class="ti ti-alert-circle"></i> On-hand count must be greater than 0.</div>'; return; }
+
+  const caps = unit==='capsules' ? amount : amount*supp.capPerBottle;
+  if(!caps || caps<=0){ alertEl.innerHTML='<div class="alert danger"><i class="ti ti-alert-circle"></i> On-hand count must be greater than 0.</div>'; return; }
+
+  supp.bottles = caps/supp.capPerBottle;
+  document.getElementById('cc-amount').value='';
+  saveState();
+  alertEl.innerHTML=`<div class="alert success"><i class="ti ti-check"></i> Updated ${supp.name} (${user.name}) to ${Math.round(caps)} caps on hand.</div>`;
+  setTimeout(()=>alertEl.innerHTML='', 4000);
 }
 
 // ── Order list ─────────────────────────────────────────────────
@@ -536,7 +728,7 @@ function showOrderList(){
         const onHand    = s.bottles * s.capPerBottle;
         const needCaps  = Math.max(0,(daily*30)-onHand);
         const needBottles=Math.ceil(needCaps/s.capPerBottle);
-        lines.push(`  • ${s.name}`);
+        lines.push(`  • ${s.name}${s.brand?' — '+s.brand:''}`);
         lines.push(`    Need: ${needBottles} bottle${needBottles!==1?'s':''} (~${Math.round(needCaps)} caps)`);
         lines.push(`    On hand: ${Math.round(onHand)} caps | Monthly use: ${Math.round(daily*30)} caps`);
       });
