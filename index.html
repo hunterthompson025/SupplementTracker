@@ -674,24 +674,43 @@ function renderInventory(){
     ? `<div class="alert danger"><i class="ti ti-alert-triangle"></i> ${lowCount} supplement${lowCount>1?'s':''} will run out before next month's order.</div>`
     : `<div class="alert success"><i class="ti ti-check"></i> All supplements should last until next month's order.</div>`;
 
-  tbody.innerHTML = rows.map(r=>{
-    const daysDisp = r.daysRem>=999 ? '—' : Math.round(r.daysRem)+'d';
-    const badge    = r.runsOut
+  // Group entries by supplement (name + brand) so shared supplements show once
+  const groupMap = new Map();
+  rows.forEach(r=>{
+    const key = (r.s.name||'').trim().toLowerCase() + '|' + (r.s.brand||'').trim().toLowerCase();
+    if(!groupMap.has(key)){
+      groupMap.set(key, { name:r.s.name, brand:r.s.brand, caps:0, weekly:0, monthly:0, daily:0, entries:[] });
+    }
+    const g = groupMap.get(key);
+    g.caps    += r.caps;
+    g.weekly  += r.weekly;
+    g.monthly += r.monthly;
+    g.daily   += r.daily;
+    g.entries.push({uid:r.user.id, uname:r.user.name, sid:r.s.id});
+  });
+  const groups = Array.from(groupMap.values()).map(g=>{
+    const daysRem = g.daily>0 ? g.caps/g.daily : 9999;
+    return {...g, daysRem, runsOut: daysRem<daysLeft};
+  }).sort((a,b)=>a.name.localeCompare(b.name));
+
+  tbody.innerHTML = groups.map(g=>{
+    const daysDisp = g.daysRem>=999 ? '—' : Math.round(g.daysRem)+'d';
+    const badge    = g.runsOut
       ? '<span class="badge warn"><i class="ti ti-alert-triangle" style="font-size:11px"></i> Order</span>'
       : '<span class="badge ok"><i class="ti ti-check" style="font-size:11px"></i> OK</span>';
-    return `<tr class="${r.runsOut?'low-row':''}">
-      <td><strong>${r.s.name}</strong>${r.s.brand?`<div style="font-size:11px;color:var(--text-muted)">${r.s.brand}</div>`:''}</td>
-      <td>${r.user.name}</td>
-      <td class="r">${Math.round(r.caps)}</td>
-      <td class="r">${Math.round(r.weekly)}</td>
-      <td class="r">${Math.round(r.monthly)}</td>
+    const userLinks = g.entries.map(e=>`
+      <span style="display:inline-flex;align-items:center;gap:4px;margin:0 8px 4px 0">
+        ${e.uname}
+        <button class="btn small" onclick="prefillCycleCount('${e.uid}','${e.sid}')" title="Update ${e.uname}'s count"><i class="ti ti-edit"></i></button>
+      </span>`).join('');
+    return `<tr class="${g.runsOut?'low-row':''}">
+      <td><strong>${g.name}</strong>${g.brand?`<div style="font-size:11px;color:var(--text-muted)">${g.brand}</div>`:''}</td>
+      <td style="flex-wrap:wrap">${userLinks}</td>
+      <td class="r">${Math.round(g.caps)}</td>
+      <td class="r">${Math.round(g.weekly)}</td>
+      <td class="r">${Math.round(g.monthly)}</td>
       <td class="r">${daysDisp}</td>
-      <td class="r">
-        <div style="display:flex;gap:6px;justify-content:flex-end;align-items:center">
-          ${badge}
-          <button class="btn small" onclick="prefillCycleCount('${r.user.id}','${r.s.id}')"><i class="ti ti-edit"></i></button>
-        </div>
-      </td>
+      <td class="r">${badge}</td>
     </tr>`;
   }).join('');
 }
@@ -704,7 +723,7 @@ function renderCycleCountOptions(){
   let opts = [];
   (state.users||[]).forEach(user=>{
     (user.supplements||[]).forEach(s=>{
-      opts.push(`<option value="${user.id}|${s.id}">${user.name} — ${s.name}${s.brand?' ('+s.brand+')':''}</option>`);
+      opts.push(`<option value="${user.id}|${s.id}">${s.name}${s.brand?' ('+s.brand+')':''}</option>`);
     });
   });
   sel.innerHTML = opts.length ? opts.join('') : '<option value="">— no supplements yet —</option>';
