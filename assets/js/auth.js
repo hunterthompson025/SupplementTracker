@@ -13,6 +13,19 @@ import { closeSuppCard } from './supplements.js';
 import { clearFatalError } from './errors.js';
 
 function authErrorMessage(code){
+  // These two are project misconfiguration rather than bad credentials, and the
+  // raw codes don't say where to go. They are checked first because the referrer
+  // one embeds the blocked origin, so it never matches a fixed string.
+  if(/requests-from-referer.*are-blocked/.test(code)){
+    return 'This site is not on the API key’s allowed referrer list. In Google Cloud '
+      + 'Console → APIs & Services → Credentials, open the browser API key and add '
+      + location.origin + '/* under Application restrictions → Websites.';
+  }
+  if(code === 'auth/unauthorized-domain'){
+    return 'This domain is not authorized for sign-in. In the Firebase Console → '
+      + 'Authentication → Settings → Authorized domains, add ' + location.hostname + '.';
+  }
+
   switch(code){
     case 'auth/invalid-email':
     case 'auth/user-not-found':

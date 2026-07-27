@@ -72,7 +72,7 @@ appears on the order list. Untick it and everything resumes.
 
 ## Firebase setup
 
-The app will not let anyone in — including you — until both of these are done.
+The app will not let anyone in — including you — until all of these are done.
 
 ### 1. Create the login account(s)
 
@@ -90,6 +90,25 @@ Recommended: **Authentication → Settings → User actions** → uncheck
 
 Firebase Console → **Firestore Database** → **Rules** → paste the contents of
 [`firestore.rules`](firestore.rules) → **Publish**.
+
+Until this is published the state document is world-writable, no matter what the
+login screen does.
+
+### 3. Let the hosting domain sign in
+
+Two separate allow-lists have to include wherever the app is served from, and
+each has its own error message:
+
+| Where | What to add | Error if missing |
+| --- | --- | --- |
+| Firebase Console → **Authentication → Settings → Authorized domains** | `hunterthompson025.github.io` | `auth/unauthorized-domain` |
+| Google Cloud Console → **APIs & Services → Credentials** → the browser API key → **Application restrictions → Websites** | `https://hunterthompson025.github.io/*` | `auth/requests-from-referer-…-are-blocked` |
+
+Add `localhost` and `http://localhost:8000/*` to the same two lists for local
+development. API key changes can take a few minutes to take effect.
+
+The API key restriction is not what protects the data — the key is readable in
+view-source either way. It limits who can spend the project's quota.
 
 This is the step that actually protects the data. Until it is published, the
 Firestore document is world-writable no matter what the page displays.
