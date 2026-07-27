@@ -104,8 +104,18 @@ each has its own error message:
 | Firebase Console → **Authentication → Settings → Authorized domains** | `hunterthompson025.github.io` | `auth/unauthorized-domain` |
 | Google Cloud Console → **APIs & Services → Credentials** → the browser API key → **Application restrictions → Websites** | `https://hunterthompson025.github.io/*` | `auth/requests-from-referer-…-are-blocked` |
 
-Add `localhost` and `http://localhost:8000/*` to the same two lists for local
-development. API key changes can take a few minutes to take effect.
+For local development, Firebase's Authorized domains list already contains
+`localhost`, so only the API key needs entries — add `http://localhost:8000/*`
+and `http://127.0.0.1:8000/*`, matching whatever port you serve on. The port is
+part of the referrer, so `http://localhost/*` alone is not enough.
+
+Each entry is added with **ADD** → type → **DONE**, then **SAVE**; skipping DONE
+discards the entry. Key changes take a few minutes to take effect.
+
+If the project has more than one browser API key, the one that matters is the
+one whose value matches `apiKey` in [`assets/js/config.js`](assets/js/config.js).
+The failing request's URL in DevTools ends in `?key=…`, which identifies it
+conclusively.
 
 The API key restriction is not what protects the data — the key is readable in
 view-source either way. It limits who can spend the project's quota.
