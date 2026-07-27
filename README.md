@@ -104,6 +104,13 @@ each has its own error message:
 | Firebase Console → **Authentication → Settings → Authorized domains** | `hunterthompson025.github.io` | `auth/unauthorized-domain` |
 | Google Cloud Console → **APIs & Services → Credentials** → the browser API key → **Application restrictions → Websites** | `https://hunterthompson025.github.io/*` | `auth/requests-from-referer-…-are-blocked` |
 
+Referrer patterns must be **bare origin + `/*`**, never path-scoped. Sign-in is a
+cross-origin request to `identitytoolkit.googleapis.com`, and the default
+`Referrer-Policy: strict-origin-when-cross-origin` strips the path, so the key
+only ever sees `https://hunterthompson025.github.io/`. An entry like
+`https://hunterthompson025.github.io/SupplementTracker/*` looks correct but can
+never match.
+
 For local development, Firebase's Authorized domains list already contains
 `localhost`, so only the API key needs entries — add `http://localhost:8000/*`
 and `http://127.0.0.1:8000/*`, matching whatever port you serve on. The port is
