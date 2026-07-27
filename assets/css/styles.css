@@ -1,0 +1,189 @@
+/* ==========================================================================
+   Supplement Tracker
+   --------------------------------------------------------------------------
+   1. Design tokens      6. Buttons          11. Alerts
+   2. Reset & base       7. Badges & tags    12. Order list
+   3. Layout             8. Tables           13. Login gate
+   4. Navigation         9. Metrics          14. Utilities
+   5. Cards & forms     10. Sync indicator   15. Responsive
+   ========================================================================== */
+
+/* 1. Design tokens ======================================================== */
+:root{
+  --bg:#f8f7f4;--surface:#ffffff;--surface-1:#f1f0ec;
+  --border:#e0deda;--border-strong:#c8c6c0;
+  --text:#1a1a18;--text-secondary:#5f5e5a;--text-muted:#999890;
+  --accent:#1a6fd4;--accent-bg:#e6f1fb;--accent-border:#b5d4f4;--accent-text:#185fa5;
+  --success:#3b6d11;--success-bg:#eaf3de;--success-border:#c0dd97;
+  --danger:#a32d2d;--danger-bg:#fcebeb;--danger-border:#f7c1c1;
+  --warning-text:#854f0b;--warning-bg:#faeeda;--warning-border:#fac775;
+  --pro-text:#534ab7;--pro-bg:#eeedfe;--pro-border:#afa9ec;
+  --radius:8px;--font:system-ui,-apple-system,'Segoe UI',sans-serif
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1a1a18;--surface:#2c2c2a;--surface-1:#3a3a38;
+    --border:#444441;--border-strong:#5f5e5a;
+    --text:#f0efe8;--text-secondary:#b4b2a9;--text-muted:#888780;
+    --accent:#378add;--accent-bg:#042c53;--accent-border:#0c447c;--accent-text:#85b7eb;
+    --success:#97c459;--success-bg:#173404;--success-border:#3b6d11;
+    --danger:#f09595;--danger-bg:#501313;--danger-border:#791f1f;
+    --warning-text:#ef9f27;--warning-bg:#412402;--warning-border:#854f0b;
+    --pro-text:#afa9ec;--pro-bg:#26215c;--pro-border:#534ab7;
+  }
+}
+
+/* 2. Reset & base ========================================================= */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}
+label{font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 3. Layout =============================================================== */
+.app{max-width:900px;margin:0 auto;padding:1.5rem 1rem}
+h1{font-size:20px;font-weight:500;margin-bottom:1.25rem;display:flex;align-items:center;gap:10px}
+h1 span{font-size:13px;font-weight:400;color:var(--text-muted)}
+.header-meta{margin-left:auto;display:flex;align-items:center;gap:10px}
+.user-email{font-size:12px;color:var(--text-muted);max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.screen{display:none}
+.screen.active{display:block}
+.divider{height:1px;background:var(--border);margin:1rem 0}
+.section-title{font-size:12px;font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.empty{text-align:center;padding:2rem;color:var(--text-muted);font-size:14px}
+.empty.compact{padding:1rem 0}
+
+/* 4. Navigation =========================================================== */
+.nav{display:flex;gap:8px;margin-bottom:1.5rem;border-bottom:1px solid var(--border);padding-bottom:1rem;flex-wrap:wrap}
+.nav-btn{background:transparent;border:1px solid var(--border);border-radius:var(--radius);padding:8px 16px;font-size:14px;cursor:pointer;color:var(--text-secondary);font-family:var(--font);display:flex;align-items:center;gap:6px}
+.nav-btn.active{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
+.nav-btn:hover:not(.active){background:var(--surface-1)}
+
+/* 5. Cards & forms ======================================================== */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1rem}
+.card-title{font-size:15px;font-weight:500;margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+.card-title-user{color:var(--accent-text)}
+.row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
+.field{flex:1;min-width:120px}
+.field-sm{flex:0 0 110px}
+.field-xs{flex:0 0 85px}
+.field-block{margin-bottom:14px}
+.field-block>label{margin-bottom:8px}
+.form-actions{display:flex;gap:8px}
+select,input[type=text],input[type=number]{width:100%;height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:14px;font-family:var(--font);outline:none}
+select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.user-check{display:inline-flex;align-items:center;gap:5px;margin:0 12px 8px 0;font-size:13px;color:var(--text-secondary)}
+
+/* Supplement / user list rows */
+.supp-row{display:flex;align-items:flex-start;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
+.supp-row:last-child{border-bottom:none}
+.supp-row.center{align-items:center}
+.supp-row-main{flex:1;min-width:0}
+.supp-name{font-size:14px;font-weight:500}
+.supp-brand{font-size:12px;color:var(--accent-text);margin-top:1px}
+.supp-detail{font-size:12px;color:var(--text-secondary);margin-top:2px}
+/* Inactive supplements stay listed but recede: they are not being consumed. */
+.is-inactive .supp-name,.is-inactive td{color:var(--text-muted)}
+.row-actions{display:flex;gap:8px}
+.row-actions.wrap{gap:6px;flex-shrink:0;margin-top:2px;flex-wrap:wrap}
+
+/* 6. Buttons ============================================================== */
+.btn{height:36px;padding:0 16px;border:1px solid var(--border-strong);border-radius:var(--radius);background:transparent;color:var(--text);font-size:14px;cursor:pointer;font-family:var(--font);white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{background:var(--surface-1)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{opacity:.9}
+.btn.danger{color:var(--danger);border-color:var(--danger-border)}
+.btn.danger:hover{background:var(--danger-bg)}
+.btn.success{background:var(--success);color:#fff;border-color:var(--success)}
+.btn.success:hover{opacity:.9}
+.btn.fullscript{background:#2d7a4f;color:#fff;border-color:#2d7a4f;text-decoration:none}
+.btn.fullscript:hover{opacity:.9}
+.btn.small{height:26px;padding:0 8px;font-size:11px}
+
+/* 7. Badges & time tags =================================================== */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:12px;background:var(--surface-1);border:1px solid var(--border);color:var(--text-secondary)}
+.badge i{font-size:11px}
+.badge.morning{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border)}
+.badge.evening{background:var(--pro-bg);color:var(--pro-text);border-color:var(--pro-border)}
+.badge.noon{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
+.badge.bedtime{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
+.badge.warn{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border)}
+.badge.ok{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
+.time-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.no-times{font-size:12px;color:var(--text-muted)}
+.tag-btn{padding:3px 10px;border-radius:20px;font-size:12px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--text-secondary);font-family:var(--font)}
+.tag-btn.sel.morning{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border)}
+.tag-btn.sel.noon{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
+.tag-btn.sel.evening{background:var(--pro-bg);color:var(--pro-text);border-color:var(--pro-border)}
+.tag-btn.sel.bedtime{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
+
+/* 8. Tables =============================================================== */
+.table-scroll{overflow-x:auto}
+.inv-table{width:100%;border-collapse:collapse;font-size:13px}
+.inv-table th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border-strong);color:var(--text-secondary);font-weight:500;font-size:12px}
+.inv-table th.r,.inv-table td.r{text-align:right}
+.inv-table td{padding:10px 8px;border-bottom:1px solid var(--border);vertical-align:middle}
+.inv-table tr:last-child td{border-bottom:none}
+.inv-table tr.low-row td{background:var(--danger-bg)}
+.inv-empty{text-align:center;padding:2rem;color:var(--text-muted)}
+.inv-user{display:inline-flex;align-items:center;gap:4px;margin:0 8px 4px 0}
+.inv-brand{font-size:11px;color:var(--text-muted)}
+
+/* 9. Metrics ============================================================== */
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem}
+.metric{background:var(--surface-1);border-radius:var(--radius);padding:12px;text-align:center}
+.metric-label{font-size:12px;color:var(--text-secondary);margin-bottom:4px}
+.metric-value{font-size:24px;font-weight:500}
+.metric-value.danger{color:var(--danger)}
+
+/* 10. Sync indicator ====================================================== */
+.sync-status{font-size:12px;display:flex;align-items:center;gap:6px}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block;margin-left:4px}
+.sync-dot.syncing{background:var(--warning-text);animation:pulse 1s infinite}
+.sync-dot.error{background:var(--danger)}
+
+/* 11. Alerts ============================================================== */
+.alert{padding:10px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:10px;border:1px solid;display:flex;align-items:center;gap:8px}
+.alert.info{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
+.alert.danger{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border)}
+.alert.success{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
+.alert.warning{background:var(--warning-bg);color:var(--warning-text);border-color:var(--warning-border)}
+.alert.spaced{margin-top:10px}
+.fatal-banner{position:fixed;bottom:10px;left:10px;right:10px;z-index:9999;background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-border);border-radius:var(--radius);padding:12px 14px;font-family:monospace;font-size:12px;white-space:pre-wrap;max-height:40vh;overflow:auto}
+
+/* 12. Order list & usage preview ========================================== */
+.order-list{background:var(--surface-1);border:1px solid var(--border);border-radius:var(--radius);padding:14px;font-family:monospace;font-size:13px;white-space:pre-wrap;margin-top:10px;line-height:1.7}
+.order-copy{margin-top:10px}
+.preview-note{font-size:13px;color:var(--text-secondary);margin:10px 0 6px}
+.preview-delta{text-align:right;font-size:13px;flex-shrink:0}
+.preview-used{font-weight:500}
+.preview-remaining{color:var(--text-secondary)}
+
+/* 13. Login gate ========================================================== */
+.auth-overlay{position:fixed;inset:0;z-index:10000;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:1.5rem}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.75rem;width:100%;max-width:360px}
+.auth-logo{font-size:18px;font-weight:500;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.auth-sub{font-size:13px;color:var(--text-muted);margin-bottom:1.5rem}
+.auth-field{margin-bottom:14px}
+/* font-size 16px keeps iOS Safari from zooming the viewport on focus */
+.auth-card input[type=email],.auth-card input[type=password]{width:100%;height:38px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:16px;font-family:var(--font);outline:none}
+.auth-card input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+.auth-card .btn{width:100%;height:40px;justify-content:center;margin-top:4px}
+.auth-spinner{display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;color:var(--text-muted);padding:1rem 0}
+.auth-spinner i{animation:spin 1s linear infinite}
+.auth-error{margin-bottom:14px}
+
+/* 14. Utilities =========================================================== */
+.hidden{display:none !important}
+/* Visually hidden but still announced by screen readers. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* 15. Responsive ========================================================== */
+@media(max-width:600px){
+  .inv-table th:nth-child(4),.inv-table td:nth-child(4){display:none}
+  .row{flex-direction:column}
+  .field,.field-sm,.field-xs{flex:unset;width:100%}
+  .user-email{display:none}
+}

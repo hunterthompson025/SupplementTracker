@@ -1,0 +1,25 @@
+// Firestore security rules for Supplement Tracker.
+//
+// This file is the real access control for the app. The page itself is public
+// on GitHub Pages and its Firebase config is readable by anyone, so these
+// rules — not the login screen — are what keep other people out of the data.
+//
+// Deploy: Firebase Console → Firestore Database → Rules → paste → Publish.
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // The entire tracker lives in this one document. Any signed-in user of
+    // this project may read and write it; everyone else is denied.
+    match /app/state {
+      allow read, write: if request.auth != null;
+    }
+
+    // Nothing else is reachable.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
