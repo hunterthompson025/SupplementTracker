@@ -70,6 +70,7 @@ h1 span{font-size:13px;font-weight:400;color:var(--text-muted)}
 .field-xs{flex:0 0 85px}
 .field-block{margin-bottom:14px}
 .field-block>label{margin-bottom:8px}
+.field-help{font-size:12px;color:var(--text-muted);margin:-4px 0 8px}
 .form-actions{display:flex;gap:8px}
 select,input[type=text],input[type=number]{width:100%;height:36px;padding:0 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:14px;font-family:var(--font);outline:none}
 select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
@@ -83,6 +84,7 @@ select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--a
 .supp-name{font-size:14px;font-weight:500}
 .supp-brand{font-size:12px;color:var(--accent-text);margin-top:1px}
 .supp-detail{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.supp-shared{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--accent-text);margin-top:3px}
 /* Inactive supplements stay listed but recede: they are not being consumed. */
 .is-inactive .supp-name,.is-inactive td{color:var(--text-muted)}
 .row-actions{display:flex;gap:8px}
@@ -111,6 +113,7 @@ select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--a
 .badge.bedtime{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
 .badge.warn{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-border)}
 .badge.ok{background:var(--success-bg);color:var(--success);border-color:var(--success-border)}
+.badge.shared{background:var(--accent-bg);color:var(--accent-text);border-color:var(--accent-border)}
 .time-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .no-times{font-size:12px;color:var(--text-muted)}
 .tag-btn{padding:3px 10px;border-radius:20px;font-size:12px;border:1px solid var(--border);background:transparent;cursor:pointer;color:var(--text-secondary);font-family:var(--font)}
@@ -130,6 +133,10 @@ select:focus,input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--a
 .inv-empty{text-align:center;padding:2rem;color:var(--text-muted)}
 .inv-user{display:inline-flex;align-items:center;gap:4px;margin:0 8px 4px 0}
 .inv-brand{font-size:11px;color:var(--text-muted)}
+/* A shared supply lists every taker in one cell, each with their own draw. */
+.inv-users{display:flex;align-items:center;flex-wrap:wrap;gap:2px}
+.inv-user-dose{font-size:11px;color:var(--text-muted)}
+.inv-user.is-inactive,.inv-user.muted{color:var(--text-muted)}
 
 /* 9. Metrics ============================================================== */
 .metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:1rem}

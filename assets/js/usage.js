@@ -1,7 +1,8 @@
 // Home screen: preview and log days of supplement usage.
 
 import { $, esc, setAlert, flashAlert } from './dom.js';
-import { findUser, supplementsOf, dailyCaps, capsOnHand } from './store.js';
+import { findUser, supplementsOf, stockOf, consumersOf,
+         dailyCaps, capsOnHand } from './store.js';
 import { saveState } from './sync.js';
 import { timeBadges, INACTIVE_BADGE } from './supplements.js';
 
@@ -23,9 +24,18 @@ export function loadHomePreview(){
 
   const heading = `<div class="preview-note">Preview — ${days} day${days !== 1 ? 's' : ''} of usage for ${esc(user.name)}:</div>`;
   el.innerHTML = heading + supps.map(s => {
+    const stock = stockOf(s);
+    if(!stock) return '';
+    // Only this person's share comes off. Everyone else logs their own days
+    // against the same supply, which is exactly how a shared bottle empties.
     const used = dailyCaps(s) * days;
-    const before = Math.round(capsOnHand(s));
+    const before = Math.round(capsOnHand(stock));
     const after = Math.max(0, before - used);
+    const others = consumersOf(stock.id).filter(c => c.user.id !== user.id);
+    const sharedNote = others.length
+      ? `<span class="badge shared"><i class="ti ti-users"></i> Shared with ${
+          esc(others.map(c => c.user.name).join(', '))}</span> `
+      : '';
     const delta = s.inactive
       ? `<div class="preview-used">not counted</div>
          <div class="preview-remaining">${before} → ${before}</div>`
@@ -33,8 +43,8 @@ export function loadHomePreview(){
          <div class="preview-remaining">${before} → ${after}</div>`;
     return `<div class="supp-row${s.inactive ? ' is-inactive' : ''}">
       <div class="supp-row-main">
-        <div class="supp-name">${esc(s.name)}</div>
-        <div class="time-tags">${s.inactive ? INACTIVE_BADGE + ' ' : ''}${timeBadges(s.times)}</div>
+        <div class="supp-name">${esc(stock.name)}</div>
+        <div class="time-tags">${sharedNote}${s.inactive ? INACTIVE_BADGE + ' ' : ''}${timeBadges(s.times)}</div>
       </div>
       <div class="preview-delta">${delta}</div>
     </div>`;
@@ -59,17 +69,23 @@ export async function logUsage(){
   const btn = $('log-btn');
   btn.disabled = true;
   let skipped = 0;
+  let shared = 0;
   supps.forEach(s => {
     // Inactive supplements are left exactly as they are — not even a zero
     // subtraction, which would round-trip through a float division.
     if(s.inactive){ skipped++; return; }
-    const remaining = Math.max(0, capsOnHand(s) - dailyCaps(s) * days);
-    s.bottles = remaining / s.capPerBottle;
+    const stock = stockOf(s);
+    if(!stock) return;
+    if(consumersOf(stock.id).length > 1) shared++;
+    const remaining = Math.max(0, capsOnHand(stock) - dailyCaps(s) * days);
+    stock.bottles = remaining / stock.capPerBottle;
   });
   await saveState();
   btn.disabled = false;
 
-  const note = skipped ? ` ${skipped} inactive supplement${skipped !== 1 ? 's' : ''} left unchanged.` : '';
+  const notes = [];
+  if(skipped) notes.push(` ${skipped} inactive supplement${skipped !== 1 ? 's' : ''} left unchanged.`);
+  if(shared) notes.push(` ${shared} shared suppl${shared !== 1 ? 'ies' : 'y'} updated for everyone.`);
   flashAlert(alertEl, 'success', 'ti-check',
-    `Logged ${days} day${days !== 1 ? 's' : ''} of supplements for ${esc(user.name)}.${note}`);
+    `Logged ${days} day${days !== 1 ? 's' : ''} of supplements for ${esc(user.name)}.${notes.join('')}`);
 }

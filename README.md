@@ -47,20 +47,54 @@ assets/
   document and is the only thing persisted.
 - **One source of truth for counts, too.** Home, Maintenance, Inventory and the
   order list all derive their numbers from `capsOnHand()`, `dailyCaps()`,
-  `daysRemaining()` and `needsOrder()` in `store.js` — no screen does its own
-  arithmetic, so they cannot drift apart.
+  `stockDailyCaps()`, `daysRemaining()` and `needsOrder()` in `store.js` — no
+  screen does its own arithmetic, so they cannot drift apart.
+- **One count per physical supply.** A shared supplement is one `stocks[]` entry
+  that several users point at, so two people's numbers for the same bottle
+  cannot disagree — there is only one number.
 
 ## How counts work
 
-Stock is tracked **per user**, not pooled. If two people take the same
-supplement, each has their own record with their own count, and the Inventory
-table shows a separate row per person. That keeps every screen in agreement:
-a cycle count or a usage log changes one person's number, and Maintenance, the
-Home preview, the Inventory row and the order list all move together.
+State separates a **stock** from a **regimen**:
 
-Pooling a shared supplement into a single row would also hide the case that
-matters most — one person nearly out while the other is well stocked would
-average out to "OK" and the order would be missed.
+```
+users:  [{id, name, supplements: [{id, stockId, dosePerSession, times, inactive}]}]
+stocks: [{id, name, brand, capPerBottle, bottles}]
+```
+
+A *stock* is one physical supply of one product. A *regimen* is how one person
+takes it. When two people share a bottle, both regimens point at the same
+`stockId`, so there is exactly **one** count — it cannot drift between them, and
+a cycle count is a single write that both people immediately see.
+
+Dose, times and the inactive flag stay per person, because two people can share
+a bottle and still take it differently. The consumption that matters is the sum:
+`stockDailyCaps()` adds up every taker's daily draw, and "days left", the order
+list and the Inventory row all measure against that combined number. A bottle
+two people take from empties twice as fast, and the app now says so.
+
+Inventory shows one row per supply, listing each taker with their own daily
+draw, so a shared row still shows who is responsible for how much of it.
+
+### Sharing a supplement
+
+Tick more than one user under **Assign to user(s)** when adding it. If the name
+and brand already match something on the shelf, the form says so and the new
+person draws from that existing supply instead of a second count being invented.
+
+### Upgrading from per-user counts
+
+Older documents kept the count on each user's supplement. `migrateState()` in
+`store.js` splits those into a stock plus a regimen on load, in memory — the
+first write afterwards persists the new shape.
+
+Migration deliberately gives every existing supplement **its own** stock, even
+where two users clearly had the same product. The old data cannot tell a shared
+bottle from two separate ones, and guessing would either double the real count
+or throw half of it away, so every number survives exactly as it was. To link
+two users to one supply afterwards: edit one person's copy, tick the other user
+under *Also assign to additional user(s)*, delete the other person's now-orphaned
+copy, and do a single cycle count to set the true number.
 
 ### Inactive supplements
 

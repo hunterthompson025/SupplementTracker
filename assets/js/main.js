@@ -8,7 +8,7 @@ import { $ } from './dom.js';
 import { showScreen } from './nav.js';
 import { initAuth, signOutUser } from './auth.js';
 import { addUser, deleteUser } from './users.js';
-import { openSuppCard, toggleTag, addSupp, cancelEditSupp, startEditSupp, addBottle, deleteSupp } from './supplements.js';
+import { openSuppCard, toggleTag, addSupp, cancelEditSupp, startEditSupp, addBottle, deleteSupp, updateStockHint } from './supplements.js';
 import { loadHomePreview, logUsage } from './usage.js';
 import { prefillCycleCount, submitCycleCount } from './inventory.js';
 import { showOrderList, copyOrder } from './orders.js';
@@ -30,7 +30,7 @@ const ACTIONS = {
   'add-bottle':       d => addBottle(d.uid, d.sid),
   'delete-supp':      d => deleteSupp(d.uid, d.sid),
   'log-usage':        () => logUsage(),
-  'prefill-cc':       d => prefillCycleCount(d.uid, d.sid),
+  'prefill-cc':       d => prefillCycleCount(d.sid),
   'submit-cc':        () => submitCycleCount(),
   'show-order-list':  () => showOrderList(),
   'copy-order':       (d, el) => copyOrder(el)
@@ -54,6 +54,9 @@ function wireInputs(){
   $('new-user-name').addEventListener('keydown', e => {
     if(e.key === 'Enter') addUser();
   });
+  // Flag an existing supply as soon as the name matches, before submit.
+  $('ns-name').addEventListener('input', updateStockHint);
+  $('ns-brand').addEventListener('input', updateStockHint);
 }
 
 // ── Boot ────────────────────────────────────────────────────────

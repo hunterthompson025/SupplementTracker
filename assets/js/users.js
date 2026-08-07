@@ -1,7 +1,7 @@
 // User management.
 
 import { $, esc } from './dom.js';
-import { store, users, supplementsOf } from './store.js';
+import { store, users, stocks, supplementsOf, consumersOf } from './store.js';
 import { saveState } from './sync.js';
 import { closeSuppCard } from './supplements.js';
 
@@ -29,6 +29,8 @@ export function addUser(){
 export function deleteUser(uid){
   if(!confirm('Delete this user and all their supplements?')) return;
   store.state.users = users().filter(u => u.id !== uid);
+  // Supplies this user shared with somebody else stay; ones only they took go.
+  store.state.stocks = stocks().filter(k => consumersOf(k.id).length > 0);
   if(store.activeMainUser === uid) closeSuppCard();
   saveState();
 }

@@ -1,7 +1,7 @@
 // Firestore persistence: real-time listener, saves, and the header sync badge.
 
 import { STATE_DOC } from './firebase.js';
-import { store } from './store.js';
+import { store, migrateState } from './store.js';
 import { $ } from './dom.js';
 import { showFatalError } from './errors.js';
 
@@ -24,8 +24,9 @@ export function startListener(onChange){
   if(unsubscribe) return;
   setSyncStatus('syncing', 'Connecting...');
   unsubscribe = STATE_DOC.onSnapshot(snap => {
-    store.state = snap.exists ? snap.data() : {users:[]};
-    if(!store.state.users) store.state.users = [];
+    // Migrate in memory only. A legacy document is upgraded on disk by the
+    // first write that follows, so simply opening the app never rewrites data.
+    store.state = migrateState(snap.exists ? snap.data() : null);
     setSyncStatus('ok', 'Synced');
     onChange();
   }, err => {
